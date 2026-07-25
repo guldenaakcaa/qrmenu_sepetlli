@@ -8,8 +8,49 @@ use App\Models\Masa;
 use App\Models\Kasa;
 use Illuminate\Support\Facades\DB;
 
+use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Hash;
+
 class DesktopSyncController extends Controller
 {
+    /**
+     * Masaüstü Uygulaması Güvenlik ve Kimlik Doğrulama (Login)
+     */
+    public function login(Request $request)
+    {
+        $request->validate([
+            'email' => 'required|email',
+            'password' => 'required'
+        ]);
+
+        $user = DB::table('users')->where('email', $request->email)->first();
+
+        if ($user && Hash::check($request->password, $user->password)) {
+            $token = Str::random(60);
+
+            DB::table('users')->where('id', $user->id)->update([
+                'api_token' => $token,
+                'updated_at' => now()
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Giriş başarılı.',
+                'token' => $token,
+                'user' => [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'email' => $user->email
+                ]
+            ]);
+        }
+
+        return response()->json([
+            'success' => false,
+            'message' => 'Giriş bilgileri hatalı.'
+        ], 401);
+    }
+
     /**
      * Masaüstü uygulamasından masaların güncel durumunu alır.
      * Beklenen JSON formatı:

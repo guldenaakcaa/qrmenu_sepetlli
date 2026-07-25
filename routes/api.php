@@ -33,12 +33,17 @@ Route::prefix('v1')->group(function () {
 
     Route::post('call/waiter/{qrcode}', [APIController::class, 'AddWaiterCallToTable']);
 
-   
-    Route::post('desktop/sync/tables', [\App\Http\Controllers\Api\DesktopSyncController::class, 'syncTables']);
-    Route::post('desktop/sync/kasa', [\App\Http\Controllers\Api\DesktopSyncController::class, 'syncKasa']);
-    Route::get('desktop/status', [\App\Http\Controllers\Api\DesktopSyncController::class, 'getStatus']);
-    
-    // Desktop Menü (Kategori & Ürün) Senkronizasyon Rotaları
-    Route::post('desktop/sync/menu', [\App\Http\Controllers\Api\DesktopSyncController::class, 'syncMenuPost']);
-    Route::get('desktop/sync/menu', [\App\Http\Controllers\Api\DesktopSyncController::class, 'syncMenuGet']);
+    // Masaüstü Login
+    Route::post('desktop/login', [\App\Http\Controllers\Api\DesktopSyncController::class, 'login']);
+
+    // Desktop Korumalı Rotalar (Token Gerektirir)
+    Route::middleware([\App\Http\Middleware\CheckDesktopToken::class])->group(function () {
+        Route::post('desktop/sync/tables', [\App\Http\Controllers\Api\DesktopSyncController::class, 'syncTables']);
+        Route::post('desktop/sync/kasa', [\App\Http\Controllers\Api\DesktopSyncController::class, 'syncKasa']);
+        Route::get('desktop/status', [\App\Http\Controllers\Api\DesktopSyncController::class, 'getStatus']);
+        
+        // Desktop Menü (Kategori & Ürün) Senkronizasyon Rotaları
+        Route::post('desktop/sync/menu', [\App\Http\Controllers\Api\DesktopSyncController::class, 'syncMenuPost']);
+        Route::get('desktop/sync/menu', [\App\Http\Controllers\Api\DesktopSyncController::class, 'syncMenuGet']);
+    });
 });
