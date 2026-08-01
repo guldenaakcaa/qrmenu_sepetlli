@@ -35,6 +35,49 @@ class APIController extends Controller
         return $this->qrCodeRepo->AddCallToTable($qrCode);
     }
 
+    public function GetActiveWaiterCalls(Request $request)
+    {
+        $pendingCalls = \App\Models\QrCodeCagri::where('Status', 0)->get();
+        if ($request->input('mark_as_pulled') == 1 && $pendingCalls->count() > 0) {
+            \App\Models\QrCodeCagri::where('Status', 0)->update(['Status' => 1]);
+        }
+        return response()->json(['success' => true, 'cagrilar' => $pendingCalls]);
+    }
+
+    public function SaveOrderToTable(Request $request, $qrCode)
+    {
+        $qrcodeKart = \App\Models\QrCodeKart::where('QRCode', $qrCode)->first();
+        $masaIsim = $qrcodeKart ? $qrcodeKart->Masaismi : 'Masa (QR: ' . $qrCode . ')';
+        $masaId = $qrcodeKart ? $qrcodeKart->Masa_id : 0;
+        
+        $items = $request->input('items', []);
+        
+        foreach ($items as $item) {
+            \App\Models\MasaSiparis::create([
+                'masa_isim' => $masaIsim,
+                'masa_id' => $masaId,
+                'session_id' => session()->getId() ?? uniqid(),
+                'urun_adi' => $item['ad'],
+                'adet' => 1,
+                'fiyat' => $item['fiyat'],
+                'ozellikler' => isset($item['ozellikler']) ? json_encode($item['ozellikler'], JSON_UNESCAPED_UNICODE) : null,
+                'durum' => 0,
+                'siparis_saati' => now()
+            ]);
+        }
+
+        $masa = \App\Models\Masa::where('isim', $masaIsim)->orWhere('id', $masaId)->first();
+        if ($masa) {
+            $totalSiparis = \App\Models\MasaSiparis::where('masa_isim', $masaIsim)->sum(\Illuminate\Support\Facades\DB::raw('fiyat * adet'));
+            $masa->update([
+                'guncel_tutar' => $totalSiparis,
+                'durum' => 1
+            ]);
+        }
+
+        return response()->json(['success' => true, 'message' => 'Siparişiniz alındı!']);
+    }
+
     public function GetLocaleLang()
     {
 

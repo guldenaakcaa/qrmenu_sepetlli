@@ -32,6 +32,9 @@ Route::prefix('v1')->group(function () {
     Route::post('getforms', [MainController::class, 'GetAllForms']);
 
     Route::post('call/waiter/{qrcode}', [APIController::class, 'AddWaiterCallToTable']);
+    Route::post('siparis/kaydet/{qrcode}', [APIController::class, 'SaveOrderToTable']);
+    Route::get('getwaitercalls', [APIController::class, 'GetActiveWaiterCalls']);
+    Route::post('getwaitercalls', [APIController::class, 'GetActiveWaiterCalls']);
 
     // Masaüstü Login
     Route::post('desktop/login', [\App\Http\Controllers\Api\DesktopSyncController::class, 'login']);
@@ -45,5 +48,12 @@ Route::prefix('v1')->group(function () {
         // Desktop Menü (Kategori & Ürün) Senkronizasyon Rotaları
         Route::post('desktop/sync/menu', [\App\Http\Controllers\Api\DesktopSyncController::class, 'syncMenuPost']);
         Route::get('desktop/sync/menu', [\App\Http\Controllers\Api\DesktopSyncController::class, 'syncMenuGet']);
+
+        // Desktop Web Siparişleri Çekme Rotası
+        Route::get('desktop/sync/web-orders', [\App\Http\Controllers\Api\DesktopSyncController::class, 'getWebOrders']);
+
+        // Desktop Garson Çağrıları Çekme Rotaları
+        Route::get('desktop/sync/waiter-calls', [\App\Http\Controllers\Api\DesktopSyncController::class, 'getWaiterCalls']);
+        Route::post('desktop/sync/waiter-calls', [\App\Http\Controllers\Api\DesktopSyncController::class, 'getWaiterCalls']);
     });
 });

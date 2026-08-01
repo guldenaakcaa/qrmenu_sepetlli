@@ -67,10 +67,95 @@ class AdminController extends Controller
         $masalar = \App\Models\Masa::all();
         $masa_siparisleri = \App\Models\MasaSiparis::all()->groupBy('masa_isim');
 
+        // QR kodları masalara göre al
+        $qrCodes = \App\Models\QrCodeKart::whereIn('Masa_id', $masalar->pluck('id'))->get()->keyBy('Masa_id');
+
         $gunluk_kasa = \App\Models\Kasa::where('tarih', $seciliTarih)->first();
         $kasa_islemleri = \App\Models\KasaIslem::where('tarih', $seciliTarih)->orderBy('islem_saati', 'desc')->get();
         
-        return view('admin.masalar.index', compact('masalar', 'masa_siparisleri', 'gunluk_kasa', 'kasa_islemleri', 'seciliTarih'));
+        $cagrilar = \App\Models\QrCodeCagri::where('Status', 0)->get();
+
+        return view('admin.masalar.index', compact('masalar', 'masa_siparisleri', 'gunluk_kasa', 'kasa_islemleri', 'seciliTarih', 'qrCodes', 'cagrilar'));
+    }
+
+    public function completeCall($id)
+    {
+        $cagri = \App\Models\QrCodeCagri::find($id);
+        if ($cagri) {
+            $cagri->Status = 1;
+            $cagri->save();
+        }
+        return redirect()->back()->with('success', 'Garson çağrısı ilgilenildi olarak işaretlendi.');
+    }
+
+    public function storeMasa(Request $request)
+    {
+        if (session('admin_role') !== '0') return redirect()->route('admin.dashboard')->with('error', 'Yetkisiz erişim.');
+        $request->validate([
+            'isim' => 'required|string|max:255'
+        ]);
+
+        $slugBase = \Illuminate\Support\Str::slug($request->isim);
+        if (empty($slugBase)) {
+            $slugBase = 'masa';
+        }
+        
+        $qrCode = $slugBase . '-' . strtolower(\Illuminate\Support\Str::random(4));
+        while(\App\Models\QrCodeKart::where('QRCode', $qrCode)->exists() || \App\Models\Masa::where('slug', $qrCode)->exists()){
+            $qrCode = $slugBase . '-' . strtolower(\Illuminate\Support\Str::random(4));
+        }
+
+        $masa = new \App\Models\Masa();
+        $masa->isim = $request->isim;
+        $masa->slug = $qrCode;
+        $masa->durum = 0;
+        $masa->guncel_tutar = 0;
+        $masa->save();
+
+        \App\Models\QrCodeKart::create([
+            'QRCode' => $qrCode,
+            'Cari_id' => 1,
+            'QRTur' => 1,
+            'KullaniciParola' => '',
+            'Masa_id' => $masa->id,
+            'Masaismi' => $masa->isim,
+            'MusteriAd' => '',
+            'KullaniciAd' => '',
+            'Personel_id' => 0,
+            'Status' => 1
+        ]);
+
+        return back()->with('success', 'Masa başarıyla eklendi ve karekodu oluşturuldu.');
+    }
+
+    public function updateMasa(Request $request, $id)
+    {
+        if (session('admin_role') !== '0') return redirect()->route('admin.dashboard')->with('error', 'Yetkisiz erişim.');
+        $request->validate([
+            'isim' => 'required|string|max:255'
+        ]);
+
+        $masa = \App\Models\Masa::findOrFail($id);
+        $masa->isim = $request->isim;
+        $masa->save();
+
+        // İlgili tablolarda da masa adını güncelle
+        \App\Models\MasaSiparis::where('masa_id', $id)->update(['masa_isim' => $request->isim]);
+        \Illuminate\Support\Facades\DB::table('t_qrcodekart')->where('Masa_id', $id)->update(['Masaismi' => $request->isim]);
+
+        return back()->with('success', 'Masa başarıyla güncellendi.');
+    }
+
+    public function destroyMasa($id)
+    {
+        if (session('admin_role') !== '0') return redirect()->route('admin.dashboard')->with('error', 'Yetkisiz erişim.');
+        $masa = \App\Models\Masa::findOrFail($id);
+        // Bağlı siparişleri ve QR kodları sil
+        \App\Models\MasaSiparis::where('masa_id', $id)->delete();
+        \Illuminate\Support\Facades\DB::table('t_qrcodekart')->where('Masa_id', $id)->delete();
+        $masa->delete();
+
+        return back()->with('success', 'Masa başarıyla silindi.');
     }
 
     public function settings()
@@ -89,10 +174,14 @@ class AdminController extends Controller
         if (session('admin_role') !== '0') return redirect()->route('admin.dashboard')->with('error', 'Yetkisiz erişim.');
         $settings = \App\Models\Ayar::first();
 
-        // Checkbox values (since unchecked checkboxes aren't sent)
-        $data = $request->except(['_token', 'logo', 'favicon', 'karsilama_gorsel']);
-        $data['menu_durumu'] = $request->has('menu_durumu') ? 1 : 0;
-        $data['coklu_dil_aktif'] = $request->has('coklu_dil_aktif') ? 1 : 0;
+        // Form 1 gönderilmişse baslik alanını doğrula
+        if (array_key_exists('baslik', $request->all())) {
+            $request->validate([
+                'baslik' => 'nullable|string|max:255'
+            ]);
+        }
+
+        $data = $request->except(['_token', 'logo', 'favicon', 'karsilama_gorsel', 'remove_logo', 'remove_favicon', 'remove_karsilama_gorsel']);
 
         // Handle File Uploads and Removals
         if ($request->has('remove_logo')) {
@@ -143,6 +232,53 @@ class AdminController extends Controller
             ->update(['password' => bcrypt($request->new_password)]);
 
         return back()->with('success', 'Şifreniz başarıyla güncellendi.');
+    }
+
+
+
+    public function masaKapat(Request $request, $id)
+    {
+        $masa = \App\Models\Masa::findOrFail($id);
+        
+        $odemeTuru = $request->input('odeme_turu', 'Nakit');
+        $tutar = $masa->guncel_tutar > 0 ? $masa->guncel_tutar : \App\Models\MasaSiparis::where('masa_isim', $masa->isim)->sum(\Illuminate\Support\Facades\DB::raw('fiyat * adet'));
+
+        if ($tutar > 0) {
+            $bugun = date('Y-m-d');
+            $kasa = \App\Models\Kasa::where('tarih', $bugun)->first();
+            
+            if (!$kasa) {
+                $kasa = \App\Models\Kasa::create([
+                    'tarih' => $bugun,
+                    'nakit_toplam' => 0,
+                    'kredi_karti_toplam' => 0,
+                    'genel_toplam' => 0
+                ]);
+            }
+
+            if ($odemeTuru == 'Nakit') {
+                $kasa->increment('nakit_toplam', $tutar);
+            } else {
+                $kasa->increment('kredi_karti_toplam', $tutar);
+            }
+            $kasa->increment('genel_toplam', $tutar);
+
+            \App\Models\KasaIslem::create([
+                'tarih' => $bugun,
+                'islem_saati' => date('Y-m-d H:i:s'),
+                'turu' => $odemeTuru,
+                'tutar' => $tutar,
+                'aciklama' => $masa->isim . ' hesabı kapatıldı'
+            ]);
+        }
+
+        // Masanın siparişlerini sil ve sıfırla
+        \App\Models\MasaSiparis::where('masa_isim', $masa->isim)->delete();
+        $masa->durum = 0;
+        $masa->guncel_tutar = 0;
+        $masa->save();
+
+        return back()->with('success', $masa->isim . ' hesabı kapatıldı ve tutar kasaya işlendi.');
     }
 
     // Admin Management Methods

@@ -117,16 +117,23 @@ class DesktopSyncController extends Controller
         $request->validate([
             'tarih' => 'required|date',
             'nakit_toplam' => 'required|numeric',
-            'kredi_karti_toplam' => 'required|numeric'
+            'kredi_karti_toplam' => 'required|numeric',
+            'yemek_karti_toplam' => 'nullable|numeric',
+            'veresiye_toplam' => 'nullable|numeric'
         ]);
 
-        $genel_toplam = $request->nakit_toplam + $request->kredi_karti_toplam;
+        $yemek_karti = $request->input('yemek_karti_toplam', 0);
+        $veresiye = $request->input('veresiye_toplam', 0);
+
+        $genel_toplam = $request->nakit_toplam + $request->kredi_karti_toplam + $yemek_karti + $veresiye;
 
         Kasa::updateOrCreate(
             ['tarih' => $request->tarih],
             [
                 'nakit_toplam' => $request->nakit_toplam,
                 'kredi_karti_toplam' => $request->kredi_karti_toplam,
+                'yemek_karti_toplam' => $yemek_karti,
+                'veresiye_toplam' => $veresiye,
                 'genel_toplam' => $genel_toplam
             ]
         );
@@ -157,10 +164,12 @@ class DesktopSyncController extends Controller
     {
         $masalar = Masa::all();
         $gunluk_kasa = Kasa::where('tarih', date('Y-m-d'))->first();
+        $cagrilar = \App\Models\QrCodeCagri::where('Status', 0)->get();
 
         return response()->json([
             'masalar' => $masalar,
-            'kasa' => $gunluk_kasa
+            'kasa' => $gunluk_kasa,
+            'cagrilar' => $cagrilar
         ]);
     }
     /**
@@ -273,6 +282,42 @@ class DesktopSyncController extends Controller
             'ana_gruplar' => $ana_gruplar,
             'urun_gruplari' => $urun_gruplari,
             'urunler' => $urunler
+        ]);
+    }
+
+    /**
+     * Masaüstü uygulamasının web tarafında oluşturulan (bekleyen) siparişleri çekmesi için kullanılır.
+     * Parametre olarak 'mark_as_pulled' = 1 gönderilirse, çekilen siparişlerin durumu 1 (İletildi/Onaylandı) olarak güncellenir.
+     */
+    public function getWebOrders(Request $request)
+    {
+        // Durumu 0 (Bekliyor) olan siparişleri getir
+        $pendingOrders = \App\Models\MasaSiparis::where('durum', 0)->get();
+
+        if ($request->input('mark_as_pulled') == 1 && $pendingOrders->count() > 0) {
+            \App\Models\MasaSiparis::where('durum', 0)->update(['durum' => 1]);
+        }
+
+        return response()->json([
+            'success' => true,
+            'orders' => $pendingOrders
+        ]);
+    }
+
+    /**
+     * Masaüstü uygulamasının bekleyen garson çağrılarını çekmesi için kullanılır.
+     */
+    public function getWaiterCalls(Request $request)
+    {
+        $pendingCalls = \App\Models\QrCodeCagri::where('Status', 0)->get();
+
+        if ($request->input('mark_as_pulled') == 1 && $pendingCalls->count() > 0) {
+            \App\Models\QrCodeCagri::where('Status', 0)->update(['Status' => 1]);
+        }
+
+        return response()->json([
+            'success' => true,
+            'cagrilar' => $pendingCalls
         ]);
     }
 }

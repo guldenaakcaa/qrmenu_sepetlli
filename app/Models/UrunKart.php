@@ -43,6 +43,13 @@ class UrunKart extends Model
         'kalori',
         'hazirlanma_suresi',
         'has_lactose',
+        'malzemeler',
+        'ekstra_soslar',
+    ];
+
+    protected $casts = [
+        'malzemeler' => 'array',
+        'ekstra_soslar' => 'array',
     ];
 
 }

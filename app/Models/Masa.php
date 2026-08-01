@@ -9,5 +9,4 @@ class Masa extends Model
 {
     use HasFactory;
     
-    protected $fillable = ['isim', 'durum', 'guncel_tutar'];
-}
+    protected $fillable = ['isim', 'slug', 'durum', 'guncel_tutar'];}

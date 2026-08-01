@@ -25,38 +25,145 @@
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        body { font-family: 'Outfit', sans-serif; background-color: var(--bg); color: var(--text); padding-bottom: 80px; }
+        
+        body { 
+            font-family: 'Outfit', sans-serif; 
+            color: var(--text); 
+            padding-bottom: 70px; /* Space for bottom nav */
+            position: relative;
+        }
+
+        /* Arka Plan Görseli */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            z-index: -2;
+            pointer-events: none;
+            @if($settings && $settings->karsilama_gorsel)
+                background: url('{{ asset("storage/" . $settings->karsilama_gorsel) }}') center/cover no-repeat;
+            @else
+                background: linear-gradient(135deg, #f0f8ff 0%, #f0fff4 100%);
+            @endif
+        }
+
+        /* Silikleştirme / Beyazlatma Efekti (Eski Haline Döndü) */
+        body::after {
+            content: '';
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            z-index: -1;
+            pointer-events: none;
+            @if($settings && $settings->karsilama_gorsel)
+                background: rgba(244, 249, 249, 0.88); 
+                backdrop-filter: blur(8px); 
+                -webkit-backdrop-filter: blur(8px);
+            @else
+                background: transparent;
+            @endif
+        }
 
         /* Header & Sticky Categories */
-        header { background: var(--surface); position: sticky; top: 0; z-index: 50; box-shadow: 0 2px 10px rgba(0,0,0,0.03); }
+        header { 
+            position: relative;
+            background: rgba(244, 249, 249, 0.75); 
+            z-index: 99; 
+            padding-bottom: 0.5rem; 
+        }
+        .sticky-top-container {
+            position: sticky; top: 0;
+            background: rgba(244, 249, 249, 0.95); 
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            z-index: 100;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.03); 
+        }
         .top-bar { display: flex; justify-content: space-between; align-items: center; padding: 1rem 1.25rem; }
         .logo { font-size: 1.25rem; font-weight: 700; color: var(--text); display: flex; align-items: center; gap: 8px; }
         .logo i { color: var(--primary); }
         
         /* Cart Icon */
-        .cart-icon-container { position: relative; display: none !important; }
+        .cart-icon-container { position: relative; display: flex; align-items: center; cursor: pointer; }
         .cart-icon { font-size: 1.35rem; color: var(--text); transition: 0.2s; }
         .cart-badge { position: absolute; top: -6px; right: -8px; background: var(--primary); color: white; font-size: 0.65rem; font-weight: 700; width: 18px; height: 18px; border-radius: 50%; display: flex; align-items: center; justify-content: center; transform: scale(0); transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
         .cart-badge.active { transform: scale(1); }
 
-        .categories { display: flex; overflow-x: auto; padding: 1rem 1.25rem; gap: 1.25rem; scrollbar-width: none; scroll-behavior: smooth; border-top: 1px solid var(--border); }
-        .categories::-webkit-scrollbar { display: none; }
-        .category-item { display: flex; flex-direction: column; align-items: center; gap: 8px; cursor: pointer; min-width: max-content; }
-        .category-circle { width: 56px; height: 56px; border-radius: 50%; border: 2px solid var(--border); display: flex; align-items: center; justify-content: center; transition: 0.3s; background: var(--surface); }
-        .category-circle i { font-size: 1.4rem; color: #94a3b8; transition: 0.3s; }
-        .category-name { font-size: 0.8rem; font-weight: 600; color: #64748b; transition: 0.3s; }
-        .category-item.active .category-circle { border-color: var(--primary); box-shadow: 0 4px 10px rgba(255,107,107,0.2); }
-        .category-item.active .category-circle i { color: var(--primary); }
-        .category-item.active .category-name { color: var(--text); }
+        /* Top Nav Bar (Masaüstü Sol Üst) */
+        .top-nav-bar {
+            display: flex;
+            justify-content: flex-end;
+            gap: 1.5rem;
+            padding: 1rem 1.25rem 0;
+            background: transparent;
+        }
+        .top-nav-bar a {
+            color: #4b5563;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.95rem;
+            transition: color 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .top-nav-bar a:hover { color: var(--primary); }
+
+        @media (max-width: 768px) {
+            .top-nav-bar { display: none; } /* Mobilde gizle */
+        }
+
+        .main-categories-slider {
+            display: flex; gap: 10px; overflow-x: auto; padding: 1rem 1.25rem;
+            margin-bottom: 1rem; scrollbar-width: none; scroll-behavior: smooth;
+            width: 100%; justify-content: center; justify-content: safe center;
+        }
+        .main-categories-slider::-webkit-scrollbar { display: none; }
+        .mc-card {
+            position: relative; width: 120px; height: 60px; flex-shrink: 0; border-radius: 12px; overflow: hidden; text-decoration: none; border: 2px solid transparent; transition: 0.2s;
+        }
+        .mc-card.active { border-color: #8B5A2B; }
+        .mc-bg {
+            position: absolute; inset: 0; background-size: cover; background-position: center; z-index: 0;
+        }
+        .mc-overlay {
+            position: absolute; inset: 0; background: rgba(0,0,0,0.5); z-index: 1; transition: 0.3s;
+        }
+        .mc-card.active .mc-overlay { background: rgba(0,0,0,0.2); }
+        .mc-title {
+            position: relative; z-index: 2; color: #fff; display: flex; align-items: center; justify-content: center; height: 100%; font-size: 0.85rem; font-weight: 800; text-align: center; text-shadow: 0 2px 4px rgba(0,0,0,0.8); letter-spacing: 0.5px;
+        }
+
+        /* Subcategories (Alt Gruplar) Pills */
+        .subcat-slider {
+            display: flex; gap: 10px; overflow-x: auto; padding: 0.5rem 1.25rem 1.5rem;
+            scrollbar-width: none; scroll-behavior: smooth;
+            width: 100%; justify-content: center; justify-content: safe center;
+        }
+        .subcat-slider::-webkit-scrollbar { display: none; }
+
+        /* Slider Okları */
+        .slider-wrapper { position: relative; display: flex; align-items: center; justify-content: center; border-bottom: 1px solid rgba(0,0,0,0.05); width: 100%; }
+        .slider-btn { position: absolute; z-index: 10; background: rgba(255,255,255,0.9); border: 1px solid #e2e8f0; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.1); color: #64748b; font-size: 0.9rem; transition: 0.2s; }
+        .slider-btn:hover { background: #fff; color: var(--primary); transform: scale(1.05); }
+        .slider-btn:active { transform: scale(0.95); }
+        .slider-btn.left { left: 5px; }
+        .slider-btn.right { right: 5px; }
+        .slider-wrapper-subcat { border-bottom: none; }
+        .subcat-pill {
+            padding: 0.75rem 1.5rem; background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; font-size: 0.85rem; font-weight: 700; color: #64748b; white-space: nowrap; cursor: pointer; transition: 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.02); text-transform: uppercase;
+        }
+        .subcat-pill.active {
+            border-color: #8B5A2B; color: #1e293b; box-shadow: 0 4px 10px rgba(139,90,43,0.1);
+        }
 
         /* Search Bar & Filters */
-        .search-container { padding: 0.5rem 1.25rem 0.5rem; background: var(--surface); }
+        .search-container { padding: 0.5rem 1.25rem 0.5rem; background: transparent; }
         .search-box { display: flex; align-items: center; background: var(--bg); border: 1px solid var(--border); border-radius: 20px; padding: 0.65rem 1rem; }
         .search-box i { color: #94a3b8; font-size: 1.1rem; margin-right: 0.75rem; }
         .search-box input { border: none; background: transparent; flex: 1; font-family: inherit; font-size: 0.95rem; color: var(--text); outline: none; }
         .search-box input::placeholder { color: #94a3b8; }
 
-        .filter-pills { display: flex; overflow-x: auto; padding: 0.5rem 1.25rem 0.5rem; gap: 0.75rem; scrollbar-width: none; background: var(--surface); }
+        .filter-pills { display: flex; overflow-x: auto; padding: 0.5rem 1.25rem 0.5rem; gap: 0.75rem; scrollbar-width: none; background: transparent; }
         .filter-pills::-webkit-scrollbar { display: none; }
         .filter-pill { display: flex; align-items: center; gap: 6px; padding: 0.4rem 0.85rem; background: var(--bg); border: 1px solid var(--border); border-radius: 20px; font-size: 0.8rem; font-weight: 500; white-space: nowrap; cursor: pointer; transition: 0.2s; color: #64748b; }
         .filter-pill.active { background: #e2e8f0; color: var(--text); border-color: #cbd5e1; }
@@ -71,11 +178,45 @@
         
         /* Category Section & Title spacing */
         .category-section { scroll-margin-top: 140px; }
-        .section-title { font-size: 1.35rem; font-weight: 700; margin-top: 3rem; margin-bottom: 1.5rem; text-transform: uppercase; letter-spacing: 0.5px; color: #1e293b; }
-        .category-section:first-child .section-title { margin-top: 1rem; }
+        .section-title { font-size: 1.35rem; font-weight: 700; margin-top: 1rem; margin-bottom: 1.5rem; text-transform: uppercase; letter-spacing: 0.5px; color: #1e293b; }
 
         /* Product Cards */
         .product-list { display: flex; flex-direction: column; gap: 1rem; margin-bottom: 1rem; }
+        .product-modal-content {
+            background: var(--surface); width: 100%; border-radius: 24px 24px 0 0; padding: 2rem 1.5rem; position: relative; max-height: 90vh; overflow-y: auto;
+        }
+
+        /* Mobil Alt Sabit Menü (Süt Evi Tarzı) */
+        .mobile-bottom-nav {
+            display: none;
+            position: fixed;
+            bottom: 0; left: 0; width: 100%;
+            background: #ffffff;
+            box-shadow: 0 -5px 20px rgba(0,0,0,0.08);
+            z-index: 1000;
+            border-radius: 24px 24px 0 0;
+            padding: 0.75rem 1rem;
+            justify-content: space-around;
+        }
+        .mobile-bottom-nav a {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: #94a3b8;
+            text-decoration: none;
+            font-size: 0.75rem;
+            font-weight: 700;
+            gap: 6px;
+            transition: all 0.3s;
+        }
+        .mobile-bottom-nav a i { font-size: 1.3rem; }
+        .mobile-bottom-nav a.active { color: #8B5A2B; }
+
+        @media (max-width: 768px) {
+            .mobile-bottom-nav { display: flex; }
+            body { padding-bottom: 90px; } /* Menü alanı için boşluk */
+        }
+        
         .product-card { background: var(--surface); border-radius: var(--radius); padding: 1rem; display: flex; gap: 1rem; box-shadow: var(--shadow); position: relative; }
         
         .product-img-wrapper { width: 130px; height: 130px; border-radius: 20px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
@@ -106,31 +247,27 @@
         .sidebar-item { padding: 1rem 1.25rem; font-size: 1.05rem; font-weight: 500; color: var(--text); border-bottom: 1px solid var(--border); cursor: pointer; transition: 0.2s; }
         .sidebar-item:active { background: var(--bg); }
 
-        /* Add to Cart Button */
-        .btn-add { width: 36px; height: 36px; border-radius: 50%; background: var(--primary); border: none; display: flex; align-items: center; justify-content: center; color: white; cursor: pointer; transition: 0.3s; font-size: 1.1rem; box-shadow: 0 4px 10px rgba(255, 107, 107, 0.3); }
-        .btn-add:active { transform: scale(0.9); }
-        .btn-add.added { background: #2ecc71; box-shadow: 0 4px 10px rgba(46, 204, 113, 0.3); }
-
         /* Flying dot animation */
         .flying-dot { position: fixed; width: 14px; height: 14px; background: var(--primary); border-radius: 50%; z-index: 1000; pointer-events: none; transition: all 0.6s cubic-bezier(0.25, 1, 0.5, 1); opacity: 0; }
         
         /* Floating Action Button */
-        .fab { position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%); background: var(--text); color: white; padding: 0.85rem 1.5rem; border-radius: 30px; font-weight: 500; font-size: 0.95rem; box-shadow: 0 10px 25px rgba(0,0,0,0.15); display: none !important; align-items: center; gap: 8px; z-index: 99; transition: 0.3s; width: max-content; }
+        .fab { position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%); background: var(--text); color: white; padding: 0.85rem 1.5rem; border-radius: 30px; font-weight: 500; font-size: 0.95rem; box-shadow: 0 10px 25px rgba(0,0,0,0.15); display: none; align-items: center; gap: 8px; z-index: 99; transition: 0.3s; width: max-content; }
         .fab span { font-weight: 700; background: rgba(255,255,255,0.2); padding: 2px 8px; border-radius: 12px; }
 
         /* Bottom Sheet (Modal) */
         .bottom-sheet-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; opacity: 0; pointer-events: none; transition: opacity 0.3s ease; backdrop-filter: blur(2px); }
         .bottom-sheet-overlay.active { opacity: 1; pointer-events: auto; }
         
-        .bottom-sheet { position: fixed; bottom: 1rem; left: 50%; width: calc(100% - 2rem); max-width: 500px; background: var(--surface); border-radius: 28px; z-index: 1001; transform: translate(-50%, 150%); transition: transform 0.4s cubic-bezier(0.2, 0.9, 0.3, 1); max-height: calc(100vh - 2rem); height: auto; display: flex; flex-direction: column; box-shadow: 0 10px 40px rgba(0,0,0,0.2); }
+        .bottom-sheet { position: fixed; bottom: 1rem; left: 50%; width: calc(100% - 2rem); max-width: 500px; background: var(--surface); border-radius: 28px; z-index: 1001; transform: translate(-50%, 150%); transition: transform 0.4s cubic-bezier(0.2, 0.9, 0.3, 1); max-height: calc(100vh - 2rem); height: auto; display: flex; flex-direction: column; box-shadow: 0 10px 40px rgba(0,0,0,0.2); overflow: hidden; }
         .bottom-sheet.active { transform: translate(-50%, 0); }
         
+        .bs-scrollable { flex: 1; overflow-y: auto; overflow-x: hidden; min-height: 0; width: 100%; -webkit-overflow-scrolling: touch; }
         .bs-header { padding: 1.25rem 1.25rem 0.5rem; text-align: center; position: relative; flex-shrink: 0; }
         .drag-handle { width: 44px; height: 5px; background: #e2e8f0; border-radius: 3px; margin: 0 auto 1rem; }
         .bs-title { font-size: 1.35rem; font-weight: 700; color: var(--text); text-align: left; margin-bottom: 0.3rem;}
         .bs-desc { font-size: 0.9rem; color: var(--text-light); text-align: left; line-height: 1.4;}
         
-        .bs-content { padding: 1rem 1.25rem; overflow-y: auto; flex: 1; padding-bottom: 20px; } /* Footer boşluğu iptal edildi */
+        .bs-content { padding: 1rem 1.25rem 1.5rem; overflow-y: auto; min-height: 0; flex: 1; }
         
         .options-group { margin-bottom: 1.75rem; }
         .options-group-title { font-size: 1.05rem; font-weight: 700; color: var(--text); margin-bottom: 0.75rem; display: flex; justify-content: space-between; align-items: center; }
@@ -144,19 +281,19 @@
         .option-price { font-size: 0.95rem; color: var(--primary); font-weight: 600; }
 
         /* Featured Slider Redesign */
-        .featured-section { padding: 0 1.25rem; margin-top: 1.5rem; margin-bottom: 1.5rem; }
-        .featured-title { font-size: 1.25rem; font-weight: 800; margin-bottom: 1rem; color: var(--text-dark); display: flex; align-items: center; gap: 8px; letter-spacing: -0.5px; }
+        .featured-section { padding: 0 1.25rem; margin-top: 0.75rem; margin-bottom: 1rem; }
+        .featured-title { font-size: 1.1rem; font-weight: 800; margin-bottom: 0.5rem; color: var(--text-dark); display: flex; align-items: center; gap: 6px; letter-spacing: -0.3px; }
         .featured-title i { color: #ff4757; }
-        .featured-slider { display: flex; gap: 1rem; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; padding-bottom: 15px; margin: 0 -1.25rem; padding-left: 1.25rem; padding-right: 1.25rem; }
+        .featured-slider { display: flex; gap: 0.75rem; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; padding-bottom: 8px; margin: 0 -1.25rem; padding-left: 1.25rem; padding-right: 1.25rem; }
         .featured-slider::-webkit-scrollbar { display: none; }
-        .featured-card { flex: 0 0 200px; scroll-snap-align: start; background: #ffffff; border-radius: 20px; overflow: hidden; box-shadow: 0 10px 20px rgba(0,0,0,0.05), 0 2px 6px rgba(0,0,0,0.03); display: flex; flex-direction: column; cursor: pointer; border: 1px solid rgba(0,0,0,0.03); transition: transform 0.2s ease; }
+        .featured-card { flex: 0 0 140px; scroll-snap-align: start; background: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.05), 0 1px 4px rgba(0,0,0,0.03); display: flex; flex-direction: column; cursor: pointer; border: 1px solid rgba(0,0,0,0.04); transition: transform 0.2s ease; }
         .featured-card:active { transform: scale(0.98); }
-        .featured-img-wrapper { width: 100%; height: 180px; background: transparent; position: relative; display: flex; align-items: center; justify-content: center; overflow: hidden; margin-top: 10px; }
-        .featured-img { width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 8px 15px rgba(0,0,0,0.1)); }
-        .featured-img-placeholder { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 3rem; color: #cbd5e1; }
-        .featured-info { padding: 1rem; display: flex; flex-direction: column; gap: 6px; }
-        .featured-name { font-size: 1.05rem; font-weight: 700; color: var(--text-dark); line-height: 1.3; margin: 0; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis; white-space: normal; }
-        .featured-price { font-size: 1.15rem; font-weight: 800; color: var(--primary); margin: 0; }
+        .featured-img-wrapper { width: 100%; height: 100px; background: transparent; position: relative; display: flex; align-items: center; justify-content: center; overflow: hidden; margin-top: 6px; }
+        .featured-img { width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 6px 12px rgba(0,0,0,0.08)); }
+        .featured-img-placeholder { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 2.2rem; color: #cbd5e1; }
+        .featured-info { padding: 0.5rem 0.75rem; display: flex; flex-direction: column; gap: 3px; }
+        .featured-name { font-size: 0.9rem; font-weight: 700; color: var(--text-dark); line-height: 1.25; margin: 0; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis; white-space: normal; }
+        .featured-price { font-size: 0.95rem; font-weight: 800; color: var(--primary); margin: 0; }
         
         /* Custom Checkbox & Radio */
         .custom-radio, .custom-checkbox { width: 22px; height: 22px; border: 2px solid #cbd5e1; border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: 0.2s; flex-shrink: 0; }
@@ -168,7 +305,7 @@
         input[type="checkbox"]:checked + .option-item .custom-checkbox { border-color: var(--primary); background: var(--primary); }
         input[type="checkbox"]:checked + .option-item .custom-checkbox::after { content: '\f00c'; font-family: 'Font Awesome 6 Free'; font-weight: 900; color: white; font-size: 0.7rem; }
 
-        .bs-footer { position: absolute; bottom: 0; left: 0; width: 100%; padding: 1rem 1.25rem; background: var(--surface); border-top: 1px solid var(--border); box-shadow: 0 -4px 20px rgba(0,0,0,0.04); border-radius: 0 0 28px 28px; }
+        .bs-footer { position: relative; flex-shrink: 0; width: 100%; padding: 1rem 1.25rem; background: var(--surface); border-top: 1px solid var(--border); box-shadow: 0 -4px 20px rgba(0,0,0,0.04); border-radius: 0 0 28px 28px; z-index: 10; }
         .btn-submit { width: 100%; background: var(--primary); color: white; border: none; padding: 1.1rem; border-radius: 16px; font-size: 1.1rem; font-weight: 600; display: flex; justify-content: space-between; align-items: center; cursor: pointer; transition: 0.2s; box-shadow: 0 4px 15px rgba(255, 107, 107, 0.3); }
         .btn-submit:active { transform: scale(0.98); box-shadow: 0 2px 8px rgba(255, 107, 107, 0.2); }
 
@@ -182,8 +319,8 @@
             .product-desc { font-size: 0.8rem; }
             .price-badge { font-size: 0.85rem; padding: 3px 8px; top: 0.75rem; right: 0.75rem; }
             
-            .featured-card { flex: 0 0 140px; }
-            .featured-img-wrapper { height: 110px; }
+            .featured-card { flex: 0 0 115px; }
+            .featured-img-wrapper { height: 75px; }
             
             .bs-product-img { max-width: 180px; margin-bottom: 8px; }
             .bs-title { font-size: 1.2rem; }
@@ -194,58 +331,75 @@
 
     <!-- Intro Screen Removed -->
 
-    <header>
-        <div class="top-bar">
-            <div style="display: flex; align-items: center; gap: 10px;">
-                <a href="/" style="color: var(--text); font-size: 1.2rem; display: flex; align-items: center; justify-content: center; width: 38px; height: 38px; border-radius: 50%; background: var(--bg); text-decoration: none; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
-                    <i class="fa-solid fa-chevron-left"></i>
-                </a>
-                <div class="hamburger-menu" onclick="toggleSidebar()" style="cursor: pointer; margin-left: 5px; display: flex; align-items: center;">
-                    <i class="fa-solid fa-bars" style="font-size: 1.5rem; color: var(--text);"></i>
-                </div>
-                <div class="logo" style="margin-left: 5px;">
-                    @if($settings && $settings->logo)
-                        <img src="{{ asset('storage/' . $settings->logo) }}" style="height: 24px; border-radius: 4px;" alt="Logo">
-                    @else
-                        <i class="fa-solid fa-utensils"></i> 
-                    @endif
-                    {{ $settings && $settings->baslik ? $settings->baslik : 'Center Cafe' }}
-                </div>
+    
+    <div class="sticky-top-container">
+        <div class="top-bar" style="position: relative;">
+            <!-- Geri Butonu -->
+            <a href="{{ route('home') }}" style="color: var(--text); font-weight: 700; font-size: 1.1rem; display: flex; align-items: center; gap: 6px; text-decoration: none;">
+                <i class="fa-solid fa-chevron-left"></i> Geri
+            </a>
+
+            <!-- Masa Badge (Tam Ortalanmış) -->
+            <div id="header-table-badge" style="display: {{ (isset($qrCodeCart) && $qrCodeCart) || session('current_masaismi') ? 'flex' : 'none' }}; position: absolute; left: 50%; transform: translateX(-50%); z-index: 20; background: linear-gradient(135deg, #1e293b, #0f172a); color: #f8fafc; padding: 6px 16px; border-radius: 20px; font-size: 0.88rem; font-weight: 700; align-items: center; gap: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); border: 1px solid rgba(255,255,255,0.1); white-space: nowrap;">
+                <i class="fa-solid fa-chair" style="color: #fcd34d; font-size: 0.95rem;"></i>
+                <span id="header-table-name">{{ $qrCodeCart ? $qrCodeCart->Masaismi : (session('current_masaismi') ?? '') }}</span>
             </div>
-            <div style="display: flex; gap: 1.25rem; align-items: center;">
-                <div class="cart-icon-container" id="cart-icon">
+            
+            <div style="display: flex; gap: 1.5rem; align-items: center;">
+                <!-- Top Nav Bar (Masaüstü için Ana Sayfa ve Admin) -->
+                <div class="top-nav-bar" style="padding: 0; gap: 1.5rem;">
+                    <a href="{{ route('home') }}">Ana Sayfa</a>
+                    <a href="javascript:void(0)" onclick="callWaiter()" style="color: #d97706;"><i class="fa-solid fa-bell"></i> Garson Çağır</a>
+                    <a href="{{ route('admin.dashboard') }}"><i class="fa-solid fa-user-lock"></i> Admin</a>
+                </div>
+                
+                <div class="cart-icon-container" id="cart-icon" onclick="openCartModal()">
                     <i class="fa-solid fa-basket-shopping cart-icon"></i>
                     <div class="cart-badge" id="cart-badge">0</div>
                 </div>
             </div>
         </div>
-        
+    </div>
+    <header>
+        <!-- Ana Kategoriler Slider -->
+        @if(isset($mainCategories) && $mainCategories->count() > 0)
+        <div class="slider-wrapper">
+            <button class="slider-btn left" onclick="scrollSlider('.main-categories-slider', -150)"><i class="fa-solid fa-chevron-left"></i></button>
+            <div class="main-categories-slider" id="main-slider">
+                @foreach($mainCategories as $mg)
+                    <a href="{{ route('menu.show', urlencode($mg->anaGrup)) }}" class="mc-card {{ isset($mainCategory) && $mg->anaGrup == $mainCategory ? 'active' : '' }}">
+                        @if($mg->anaGrupResimPath && file_exists(storage_path('app/public/' . $mg->anaGrupResimPath)))
+                            <div class="mc-bg" style="background-image: url('{{ asset('storage/' . $mg->anaGrupResimPath) }}');"></div>
+                        @else
+                            <div class="mc-bg" style="background: linear-gradient(45deg, #a1c4fd, #c2e9fb);"></div>
+                        @endif
+                        <div class="mc-overlay"></div>
+                        <span class="mc-title">{{ mb_strtoupper($mg->anaGrup, 'UTF-8') }}</span>
+                    </a>
+                @endforeach
+            </div>
+            <button class="slider-btn right" onclick="scrollSlider('.main-categories-slider', 150)"><i class="fa-solid fa-chevron-right"></i></button>
+        </div>
+        @endif
+
         <!-- Arama Çubuğu -->
         <div class="search-container">
             <div class="search-box">
                 <i class="fa-solid fa-magnifying-glass"></i>
-                <input type="text" id="searchInput" placeholder="Yemek veya kategori ara..." onkeyup="filterProducts()">
+                <input type="text" id="searchInput" placeholder="Arama...." onkeyup="filterProducts()">
             </div>
         </div>
-
-        <!-- Hap Filtreler -->
-        <div class="filter-pills">
-            <div class="filter-pill active" onclick="toggleFilter(this, 'all')"><i class="fa-solid fa-star text-yellow-400"></i> Tümü</div>
-            <div class="filter-pill" onclick="toggleFilter(this, 'laktoz')"><i class="fa-solid fa-cow" style="color: #60a5fa;"></i> Laktoz</div>
-            <div class="filter-pill" onclick="toggleFilter(this, 'gluten')"><i class="fa-solid fa-wheat-awn text-amber-500"></i> Gluten</div>
-        </div>
-
-
         
-        <div class="categories" id="category-tabs">
-            @foreach($categories as $index => $category)
-                <div class="category-item {{ $index == 0 ? 'active' : '' }}" data-target="cat-{{ $index }}" onclick="scrollToCategory('cat-{{ $index }}', this)">
-                    <div class="category-circle">
-                        <i class="fa-solid fa-utensils"></i>
+        <div class="slider-wrapper slider-wrapper-subcat">
+            <button class="slider-btn left" onclick="scrollSlider('#category-tabs', -150)"><i class="fa-solid fa-chevron-left"></i></button>
+            <div class="subcat-slider" id="category-tabs">
+                @foreach($categories as $index => $category)
+                    <div class="subcat-pill {{ $index == 0 ? 'active' : '' }} category-item" data-target="cat-{{ $index }}" onclick="scrollToCategory('cat-{{ $index }}', this)">
+                        {{ mb_strtoupper($category, 'UTF-8') }}
                     </div>
-                    <div class="category-name">{{ $category }}</div>
-                </div>
-            @endforeach
+                @endforeach
+            </div>
+            <button class="slider-btn right" onclick="scrollSlider('#category-tabs', 150)"><i class="fa-solid fa-chevron-right"></i></button>
         </div>
     </header>
 
@@ -254,49 +408,53 @@
         <!-- Öne Çıkanlar (Featured Slider) -->
         <div class="featured-section">
             <h2 class="featured-title"><i class="fa-solid fa-fire text-orange-500"></i> Şefin Tavsiyesi</h2>
-            <div class="featured-slider">
-                @foreach($featuredProducts as $urun)
-                    @php
-                        $featCatName = mb_strtolower($urun->UrunGrubu ?? '', 'UTF-8');
-                        $isFeatDrink = preg_match('/(drink|beer|şarap|wine|su|kahve|coffee|coffe|çay|tea|beverage|içecek|meşrubat|import|local|vodka|cin|rakı|bira|kokteyl|cocktail|cooktail|moctail|mocktail|ayran|kola|fanta|sprite|soda|milkshake|daiquiri|mojito|shot|frozen)/i', $featCatName);
-                    @endphp
-                    <div class="featured-card" onclick="openBottomSheet(this, event)" 
-                         data-urun="{{ json_encode([
-                             'ad' => $urun->UrunAd,
-                             'aciklama' => $urun->UrunAciklama,
-                             'fiyat' => (float)$urun->FixFiyat,
-                             'kategori' => $urun->UrunGrubu ?? '',
-                             'is_drink' => $isFeatDrink ? 1 : 0,
-                             'has_lactose' => $urun->has_lactose ?? 0,
-                             'has_gluten' => $urun->has_gluten ?? 0,
-                             'malzemeler' => $urun->malzeme_listesi ?? [],
-                             'kalori' => $urun->kalori ?? '',
-                             'hazirlanma_suresi' => $urun->hazirlanma_suresi ?? '',
-                             'resim' => $urun->UrunResimPath ? asset('storage/' . $urun->UrunResimPath) : null
-                         ]) }}"
-                         data-vegan="{{ $urun->is_vegan }}" 
-                         data-gluten="{{ $urun->has_gluten }}" 
-                         data-lactose="{{ $urun->has_lactose }}" 
-                         data-aci="{{ $urun->is_aci }}">
-                        <div class="featured-img-wrapper">
-                            @if($urun->UrunResimPath && $urun->UrunResimPath !== '0')
-                                <img src="{{ asset('storage/' . $urun->UrunResimPath) }}" alt="{{ $urun->UrunAdKisa ?? $urun->UrunAd }}" class="featured-img">
-                            @else
-                                <div class="featured-img-placeholder"><i class="fa-solid fa-image"></i></div>
-                            @endif
+            <div class="slider-wrapper slider-wrapper-subcat" style="margin: 0 -1.25rem; padding: 0 1.25rem;">
+                <button class="slider-btn left" style="left: 10px;" onclick="scrollSlider('.featured-slider', -150)"><i class="fa-solid fa-chevron-left"></i></button>
+                <div class="featured-slider" style="margin:0; padding-left:0; padding-right:0;">
+                    @foreach($featuredProducts as $urun)
+                        @php
+                            $featCatName = mb_strtolower($urun->UrunGrubu ?? '', 'UTF-8');
+                            $isFeatDrink = preg_match('/(drink|beer|şarap|wine|su|kahve|coffee|coffe|çay|tea|beverage|içecek|meşrubat|import|local|vodka|cin|rakı|bira|kokteyl|cocktail|cooktail|moctail|mocktail|ayran|kola|fanta|sprite|soda|milkshake|daiquiri|mojito|shot|frozen)/i', $featCatName);
+                        @endphp
+                        <div class="featured-card" onclick="openBottomSheet(this, event)" 
+                             data-urun="{{ json_encode([
+                                 'ad' => $urun->UrunAd,
+                                 'aciklama' => $urun->UrunAciklama,
+                                 'fiyat' => (float)$urun->FixFiyat,
+                                 'kategori' => $urun->UrunGrubu ?? '',
+                                 'is_drink' => $isFeatDrink ? 1 : 0,
+                                 'has_lactose' => $urun->has_lactose ?? 0,
+                                 'has_gluten' => $urun->has_gluten ?? 0,
+                                 'malzemeler' => $urun->malzeme_listesi ?? [],
+                                 'kalori' => $urun->kalori ?? '',
+                                 'hazirlanma_suresi' => $urun->hazirlanma_suresi ?? '',
+                                 'resim' => $urun->UrunResimPath ? asset('storage/' . $urun->UrunResimPath) : null
+                             ], JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) }}"
+                             data-vegan="{{ $urun->is_vegan }}" 
+                             data-gluten="{{ $urun->has_gluten }}" 
+                             data-lactose="{{ $urun->has_lactose }}" 
+                             data-aci="{{ $urun->is_aci }}">
+                            <div class="featured-img-wrapper">
+                                @if($urun->UrunResimPath && $urun->UrunResimPath !== '0')
+                                    <img src="{{ asset('storage/' . $urun->UrunResimPath) }}" alt="{{ $urun->UrunAdKisa ?? $urun->UrunAd }}" class="featured-img">
+                                @else
+                                    <div class="featured-img-placeholder"><i class="fa-solid fa-image"></i></div>
+                                @endif
+                            </div>
+                            <div class="featured-info">
+                                <h3 class="featured-name">{{ mb_strtoupper($urun->UrunAdKisa ?? $urun->UrunAd, 'UTF-8') }}</h3>
+                                <div class="featured-price">₺{{ number_format((float)$urun->FixFiyat, 2, ',', '.') }}</div>
+                            </div>
                         </div>
-                        <div class="featured-info">
-                            <h3 class="featured-name">{{ $urun->UrunAdKisa ?? $urun->UrunAd }}</h3>
-                            <div class="featured-price">₺{{ number_format((float)$urun->FixFiyat, 2) }}</div>
-                        </div>
-                    </div>
-                @endforeach
+                    @endforeach
+                </div>
+                <button class="slider-btn right" style="right: 10px;" onclick="scrollSlider('.featured-slider', 150)"><i class="fa-solid fa-chevron-right"></i></button>
             </div>
         </div>
         @endif
         @foreach($categories as $index => $category)
             @if(isset($productsByCategory[$category]) && $productsByCategory[$category]->count() > 0)
-                <div class="category-section" id="cat-{{ $index }}">
+                <div class="category-section" id="cat-{{ $index }}" style="{{ $index != 0 ? 'display: none;' : '' }}">
                     <h2 class="section-title">{{ $category }}</h2>
                     
                     <div class="product-list">
@@ -323,7 +481,7 @@
                                      'kalori' => $urun->kalori ?? '',
                                      'hazirlanma_suresi' => $urun->hazirlanma_suresi ?? '',
                                      'resim' => ($urun->UrunResimPath && $urun->UrunResimPath !== '0') ? asset('storage/' . $urun->UrunResimPath) : ''
-                                 ], JSON_UNESCAPED_UNICODE) }}"
+                                 ], JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) }}"
                                  onclick="openBottomSheet(this, event)">
                                 <div class="price-badge">₺{{ number_format((float)$urun->FixFiyat, 2) }}</div>
                                 <div class="product-img-wrapper">
@@ -358,12 +516,6 @@
                                     </div>
                                     <div class="product-footer">
                                         <div class="product-price">₺{{ number_format((float)$urun->FixFiyat, 2) }}</div>
-                                        {{-- Sepete ekle butonu şimdilik gizlendi, ürün kartına tıklandığında açılıyor --}}
-                                        {{-- 
-                                        <button class="btn-add">
-                                            <i class="fa-solid fa-plus"></i>
-                                        </button>
-                                        --}}
                                     </div>
                                 </div>
                             </div>
@@ -379,9 +531,7 @@
         <i class="fa-solid fa-bolt" style="color: #fcd34d; margin-right: 3px;"></i> Powered by <a href="#" style="font-weight: 600; color: #94a3b8; text-decoration: none;">Mikale Yazılım</a>
     </div>
 
-
-
-    <div class="fab" id="view-cart-btn" style="display: none;">
+    <div class="fab" id="view-cart-btn" style="display: none;" onclick="openCartModal()">
         <i class="fa-solid fa-basket-shopping"></i>
         Sepeti Gör <span id="fab-total">₺0</span>
     </div>
@@ -474,35 +624,192 @@
     <!-- Bottom Sheet Modal -->
     <div class="bottom-sheet-overlay" id="bs-overlay" onclick="closeBottomSheet()"></div>
     <div class="bottom-sheet" id="bottom-sheet">
-        <div class="bs-header" style="display: flex; flex-direction: column; align-items: center; text-align: center;">
-            <div class="drag-handle"></div>
-            <img id="bs-product-img" src="" alt="" class="bs-product-img">
-            <h3 class="bs-title" id="bs-product-name">Ürün Adı</h3>
-            <p class="bs-desc" id="bs-product-desc" style="margin-bottom: 12px;">Ürün açıklaması</p>
-            <div id="bs-info-chips" style="display: flex; gap: 8px; justify-content: flex-start; flex-wrap: wrap; margin-bottom: 8px;"></div>
-        </div>
-        
-        <div class="bs-content">
-            <!-- Dinamik Seçenekler (JS ile doldurulacak) -->
-            <div id="dynamic-options-container"></div>
+        <div class="bs-scrollable">
+            <div class="bs-header" style="display: flex; flex-direction: column; align-items: center; text-align: center;">
+                <div class="drag-handle"></div>
+                <img id="bs-product-img" src="" alt="" class="bs-product-img">
+                <h3 class="bs-title" id="bs-product-name">Ürün Adı</h3>
+                <p class="bs-desc" id="bs-product-desc" style="margin-bottom: 12px;">Ürün açıklaması</p>
+                <div id="bs-info-chips" style="display: flex; gap: 8px; justify-content: flex-start; flex-wrap: wrap; margin-bottom: 8px;"></div>
+            </div>
             
-            <!-- Bottom Sheet Branding -->
-            <div style="margin-top: 2rem; text-align: center; font-size: 0.65rem; color: #cbd5e1; letter-spacing: 0.5px;">
-                <i class="fa-solid fa-bolt" style="color: #fcd34d; opacity: 0.8;"></i> <span style="font-weight: 500;">Mikale Yazılım</span>
+            <div class="bs-content" style="overflow-y: visible;">
+                <!-- Dinamik Seçenekler (JS ile doldurulacak) -->
+                <div id="dynamic-options-container"></div>
+                
+                <!-- Bottom Sheet Branding -->
+                <div style="margin-top: 2rem; text-align: center; font-size: 0.65rem; color: #cbd5e1; letter-spacing: 0.5px;">
+                    <i class="fa-solid fa-bolt" style="color: #fcd34d; opacity: 0.8;"></i> <span style="font-weight: 500;">Mikale Yazılım</span>
+                </div>
             </div>
         </div>
 
-        {{-- Sepete Ekle Butonu Geçici Olarak Kapatıldı
         <div class="bs-footer">
             <button class="btn-submit" onclick="submitBottomSheet()">
                 <span>Sepete Ekle</span>
                 <span id="bs-total-price">₺0</span>
             </button>
         </div>
-        --}}
     </div>
 
+    <!-- Sepet Modal -->
+    <div class="bottom-sheet-overlay" id="cart-overlay" onclick="closeCartModal()"></div>
+    <div class="bottom-sheet" id="cart-modal" style="max-height: 85vh;">
+        <div class="bs-header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 1rem;">
+            <h3 class="bs-title" style="margin:0;"><i class="fa-solid fa-basket-shopping" style="color:var(--primary); margin-right:8px;"></i>Sepetiniz <span id="cart-table-badge" style="font-size: 0.85rem; font-weight: 700; color: #10b981; margin-left: 6px;">{{ $qrCodeCart ? ('(' . $qrCodeCart->Masaismi . ')') : (session('current_masaismi') ? ('(' . session('current_masaismi') . ')') : '') }}</span></h3>
+            <button onclick="closeCartModal()" style="background:none; border:none; font-size:1.4rem; color:var(--text); cursor:pointer;"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="bs-content" id="cart-items-container" style="padding-top: 1rem;">
+            <!-- Sepet içeriği js ile dolacak -->
+        </div>
+        <div class="bs-footer">
+            <button class="btn-submit" id="btn-submit-order" onclick="submitOrder()" style="background: #22c55e;">
+                <span>Siparişi Tamamla</span>
+                <span id="cart-modal-total">₺0</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Mobil Alt Sabit Menü -->
+    <div class="mobile-bottom-nav">
+        <a href="{{ route('home') }}">
+            <i class="fa-solid fa-house"></i>
+            <span>Ana Sayfa</span>
+        </a>
+        <a href="javascript:void(0)" onclick="callWaiter()">
+            <i class="fa-solid fa-bell" style="color: #fcd34d;"></i>
+            <span>Garson Çağır</span>
+        </a>
+        <a href="{{ route('admin.dashboard') }}">
+            <i class="fa-solid fa-user-lock"></i>
+            <span>Admin</span>
+        </a>
+    </div>
+
+    <!-- Garson Çağır Modal / Bildirim -->
+    <div id="waiter-notification" style="display:none; position:fixed; top:20px; left:50%; transform:translateX(-50%); background:#22c55e; color:white; padding:12px 24px; border-radius:30px; font-weight:600; font-size:0.95rem; z-index:9999; box-shadow:0 10px 25px rgba(34,197,94,0.3); align-items:center; gap:8px;">
+        <i class="fa-solid fa-check-circle"></i> Garson çağrıldı!
+    </div>
+    
+    <div id="waiter-error" style="display:none; position:fixed; top:20px; left:50%; transform:translateX(-50%); background:#ef4444; color:white; padding:12px 24px; border-radius:30px; font-weight:600; font-size:0.95rem; z-index:9999; box-shadow:0 10px 25px rgba(239,68,68,0.3); align-items:center; gap:8px;">
+        <i class="fa-solid fa-triangle-exclamation"></i> Lütfen masanızdaki QR kodu okutun!
+    </div>
+
+    <!-- Custom Modern Alert Modal -->
+    <div class="bottom-sheet-overlay" id="custom-alert-overlay" onclick="closeCustomAlert()"></div>
+    <div id="custom-alert-modal" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%, -50%) scale(0.95); background:var(--surface); border-radius:24px; width:calc(100% - 2.5rem); max-width:380px; padding:2rem 1.5rem; z-index:10000; box-shadow:0 25px 60px rgba(0,0,0,0.3); text-align:center; transition: all 0.3s cubic-bezier(0.2, 0.9, 0.3, 1); opacity:0; pointer-events:none;">
+        <div id="custom-alert-icon" style="font-size:3.5rem; margin-bottom:1rem;"></div>
+        <h4 id="custom-alert-title" style="font-size:1.3rem; font-weight:800; color:var(--text); margin:0 0 0.5rem 0;"></h4>
+        <p id="custom-alert-desc" style="font-size:0.95rem; color:var(--text-light); margin:0 0 1.5rem 0; line-height:1.5;"></p>
+        <button onclick="closeCustomAlert()" style="width:100%; background:var(--text); color:#fff; border:none; padding:0.9rem; border-radius:14px; font-size:1rem; font-weight:700; cursor:pointer; box-shadow:0 4px 12px rgba(0,0,0,0.1); transition:0.2s;">Tamam</button>
+    </div>
+
+    <!-- Hidden QrCode -->
+    <input type="hidden" id="qrcode_val" value="{{ $qrcode ?? (session('current_qrcode') ?? '') }}">
+
     <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            // LocalStorage masa bilgisi senkronizasyonu
+            let currentQr = document.getElementById('qrcode_val') ? document.getElementById('qrcode_val').value : '';
+            let serverTableName = document.getElementById('header-table-name') ? document.getElementById('header-table-name').textContent.trim() : '';
+            
+            if (currentQr && serverTableName) {
+                localStorage.setItem('menu_qrcode', currentQr);
+                localStorage.setItem('menu_table_name', serverTableName);
+            } else if (!currentQr && localStorage.getItem('menu_qrcode')) {
+                if (document.getElementById('qrcode_val')) {
+                    document.getElementById('qrcode_val').value = localStorage.getItem('menu_qrcode');
+                }
+                if (document.getElementById('header-table-name')) {
+                    let tName = localStorage.getItem('menu_table_name') || 'Masa';
+                    document.getElementById('header-table-name').textContent = tName;
+                    document.getElementById('header-table-badge').style.display = 'flex';
+                    if (document.getElementById('cart-table-badge')) {
+                        document.getElementById('cart-table-badge').textContent = '(' + tName + ')';
+                    }
+                }
+            }
+        });
+
+        function showCustomAlert(title, message, type = 'error') {
+            const overlay = document.getElementById('custom-alert-overlay');
+            const modal = document.getElementById('custom-alert-modal');
+            const iconEl = document.getElementById('custom-alert-icon');
+            const titleEl = document.getElementById('custom-alert-title');
+            const descEl = document.getElementById('custom-alert-desc');
+
+            if(type === 'success') {
+                iconEl.innerHTML = '<i class="fa-solid fa-circle-check" style="color: #10b981;"></i>';
+            } else if(type === 'warning') {
+                iconEl.innerHTML = '<i class="fa-solid fa-circle-exclamation" style="color: #f59e0b;"></i>';
+            } else {
+                iconEl.innerHTML = '<i class="fa-solid fa-triangle-exclamation" style="color: #ef4444;"></i>';
+            }
+            titleEl.textContent = title;
+            descEl.textContent = message;
+
+            overlay.classList.add('active');
+            modal.style.display = 'block';
+            setTimeout(() => {
+                modal.style.transform = 'translate(-50%, -50%) scale(1)';
+                modal.style.opacity = '1';
+                modal.style.pointerEvents = 'auto';
+            }, 10);
+        }
+
+        function closeCustomAlert() {
+            const overlay = document.getElementById('custom-alert-overlay');
+            const modal = document.getElementById('custom-alert-modal');
+            if(overlay && modal) {
+                overlay.classList.remove('active');
+                modal.style.transform = 'translate(-50%, -50%) scale(0.95)';
+                modal.style.opacity = '0';
+                modal.style.pointerEvents = 'none';
+                setTimeout(() => { modal.style.display = 'none'; }, 300);
+            }
+        }
+
+        function scrollSlider(selector, offset) {
+            const slider = document.querySelector(selector);
+            if (slider) {
+                slider.scrollBy({ left: offset, behavior: 'smooth' });
+            }
+        }
+
+        function callWaiter() {
+            let qrCode = (document.getElementById('qrcode_val') ? document.getElementById('qrcode_val').value : '') || localStorage.getItem('menu_qrcode') || '';
+            if (!qrCode) {
+                showCustomAlert('Masa Bilgisi Gerekli', 'Lütfen garson çağırabilmek için masanızdaki QR kodu okutarak giriş yapınız.', 'warning');
+                return;
+            }
+
+            fetch("/api/v1/call/waiter/" + qrCode, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRF-TOKEN": "{{ csrf_token() }}"
+                }
+            })
+            .then(res => res.text())
+            .then(text => {
+                let notif = document.getElementById('waiter-notification');
+                if (text === "ok") {
+                    notif.innerHTML = '<i class="fa-solid fa-check-circle"></i> Garson çağrıldı! Birazdan masanızla ilgilenilecek.';
+                    notif.style.background = '#22c55e';
+                } else {
+                    notif.innerHTML = '<i class="fa-solid fa-clock"></i> ' + text;
+                    notif.style.background = '#f59e0b';
+                }
+                notif.style.display = 'flex';
+                setTimeout(() => { notif.style.display = 'none'; }, 3000);
+            })
+            .catch(err => {
+                let errEl = document.getElementById('waiter-error');
+                errEl.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> Bir hata oluştu.';
+                errEl.style.display = 'flex';
+                setTimeout(() => { errEl.style.display = 'none'; }, 2500);
+            });
+        }
 
 
         let cartCount = 0;
@@ -559,71 +866,78 @@
                     }
                 });
 
-                // Hiç eşleşen ürün yoksa kategoriyi tamamen gizle
-                if (hasVisibleProduct) {
-                    section.style.display = 'block';
+                // Arama metni veya filtre varken eşleşen kategorileri göster, normalde sadece aktif sekme görünsün
+                const isSearching = (query !== '' || activeFilter !== 'all');
+                if (isSearching) {
+                    section.style.display = hasVisibleProduct ? 'block' : 'none';
                 } else {
-                    section.style.display = 'none';
+                    const activeTab = document.querySelector('.category-item.active');
+                    const targetId = activeTab ? activeTab.getAttribute('data-target') : 'cat-0';
+                    section.style.display = (section.getAttribute('id') === targetId) ? 'block' : 'none';
+                }
+            });
+        }
+
+        function checkArrows() {
+            document.querySelectorAll('.slider-wrapper').forEach(wrapper => {
+                const slider = wrapper.querySelector('.main-categories-slider, .subcat-slider, .featured-slider');
+                const leftBtn = wrapper.querySelector('.slider-btn.left');
+                const rightBtn = wrapper.querySelector('.slider-btn.right');
+                
+                if (slider && leftBtn && rightBtn) {
+                    if (slider.scrollWidth > slider.clientWidth) {
+                        leftBtn.style.display = slider.scrollLeft <= 0 ? 'none' : 'flex';
+                        rightBtn.style.display = Math.ceil(slider.scrollLeft + slider.clientWidth) >= slider.scrollWidth ? 'none' : 'flex';
+                    } else {
+                        leftBtn.style.display = 'none';
+                        rightBtn.style.display = 'none';
+                    }
                 }
             });
         }
 
         document.addEventListener("DOMContentLoaded", () => {
-            const sections = document.querySelectorAll(".category-section");
-            const navChips = document.querySelectorAll(".category-item");
-
-            // Intersection Observer (Scrollspy)
-            const observerOptions = {
-                root: null,
-                rootMargin: "-150px 0px -60% 0px", // Header offset'ini hesaba katarak
-                threshold: 0
-            };
-
-            const observer = new IntersectionObserver((entries) => {
-                if (isScrolling) return; // Kullanıcı butona basarak scroll yapıyorsa göz ardı et
-
-                entries.forEach(entry => {
-                    if (entry.isIntersecting) {
-                        const id = entry.target.getAttribute("id");
-                        
-                        navChips.forEach(chip => {
-                            chip.classList.remove("active");
-                            if (chip.getAttribute("data-target") === id) {
-                                chip.classList.add("active");
-                                chip.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
-                            }
-                        });
-                    }
-                });
-            }, observerOptions);
-
-            sections.forEach(sec => observer.observe(sec));
+            // Okların durumunu kontrol et
+            checkArrows();
+            window.addEventListener('resize', checkArrows);
+            document.querySelectorAll('.main-categories-slider, .subcat-slider, .featured-slider').forEach(slider => {
+                slider.addEventListener('scroll', checkArrows);
+            });
         });
 
         function scrollToCategory(id, element) {
-            isScrolling = true;
+            // Sekme değiştirirken eski arama kaldıysa temizle ki o sekmenin ürünleri görünsün
+            const searchInput = document.getElementById('searchInput');
+            if (searchInput && searchInput.value !== '') {
+                searchInput.value = '';
+                document.querySelectorAll('.product-card').forEach(p => p.style.display = 'flex');
+            }
 
-            // Aktif çipi güncelle ve merkeze kaydır
+            // Aktif sekmeyi güncelle ve slider'da merkeze kaydır
             document.querySelectorAll('.category-item').forEach(chip => chip.classList.remove('active'));
-            if(element) element.classList.add('active');
-            if(element) element.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+            if(element) {
+                element.classList.add('active');
+                const slider = document.querySelector('.subcat-slider');
+                if(slider) {
+                    slider.scrollTo({
+                        left: element.offsetLeft - (slider.offsetWidth / 2) + (element.offsetWidth / 2),
+                        behavior: 'smooth'
+                    });
+                }
+            }
             
-            // Bölüme yumuşak kaydırma
-            const el = document.getElementById(id);
-            if(el) {
-                const headerOffset = 210; // Arama barı vs. eklendiği için offseti arttırdık
-                const elementPosition = el.getBoundingClientRect().top;
-                const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
-                
-                window.scrollTo({
-                     top: offsetPosition,
-                     behavior: "smooth"
-                });
+            // Seçilen kategoriyi göster, diğerlerini gizle (Sekme / Tab yapısı - Sayfa aşağı kaymaz!)
+            document.querySelectorAll('.category-section').forEach(sec => {
+                if (sec.getAttribute('id') === id) {
+                    sec.style.display = 'block';
+                } else {
+                    sec.style.display = 'none';
+                }
+            });
 
-                // Scroll bittikten sonra Observer'ı tekrar aktifleştir (yaklaşık 800ms)
-                setTimeout(() => {
-                    isScrolling = false;
-                }, 800);
+            // Kullanıcı uzun bir listede çok aşağı indiyse sekme değiştiğinde üst kısmı kolay görsün
+            if (window.pageYOffset > 250) {
+                window.scrollTo({ top: 0, behavior: "smooth" });
             }
         }
 
@@ -699,6 +1013,69 @@
             document.querySelectorAll('.extra-item-cb').forEach(cb => cb.checked = false);
             
             let dynamicOptionsHtml = '';
+            const adKucuk = (urunData.ad || '').toLowerCase();
+            const katKucuk = (urunData.kategori || '').toLowerCase();
+            
+            // Kutu içecek veya meşrubat mı?
+            const isCanned = /kutu|can|cola|kola|fanta|sprite|soda|su|ayran|enerji|energy|gazoz/i.test(adKucuk) || /kutu|meşrubat|hazır içecek/i.test(katKucuk);
+            
+            if (isDrink && !isCanned) {
+                // Sütlü/hazırlanan içecek
+                if (urunData.has_lactose == 1 || /kahve|coffee|latte|cappuccino|mocha|milk|süt|çikolata/i.test(adKucuk)) {
+                    dynamicOptionsHtml += `
+                    <div class="options-group">
+                        <div class="options-group-title">Süt Seçeneği <span style="font-size:0.8rem; font-weight:400; color:#64748b;">(İsteğe bağlı)</span></div>
+                        <label style="display:flex; align-items:center; justify-content:space-between; padding:10px 14px; border:1px solid var(--border); border-radius:12px; margin-bottom:8px; cursor:pointer;">
+                            <span style="font-weight:500; font-size:0.95rem;">Laktozsuz Süt İle Hazırlansın</span>
+                            <input type="checkbox" class="extra-item-cb option-checkbox" data-name="Laktozsuz Süt" data-price="0" value="0" style="width:20px; height:20px; accent-color:var(--primary);" onchange="calculateTotal()">
+                        </label>
+                    </div>`;
+                }
+            } else if (!isDrink && !isCanned) {
+                // Yiyecek (Ekle/Çıkar)
+                dynamicOptionsHtml += `
+                <div class="options-group" style="margin-bottom:1.25rem;">
+                    <div class="options-group-title" style="margin-bottom:0.5rem; font-size:1rem; color:var(--text); font-weight:700;">Çıkarılmasını İstedikleriniz</div>
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px;">
+                        <label style="display:flex; align-items:center; gap:8px; padding:8px 12px; border:1px solid var(--border); border-radius:10px; cursor:pointer; font-size:0.9rem;">
+                            <input type="checkbox" class="remove-item-cb option-checkbox" data-name="Soğansız" style="width:18px; height:18px; accent-color:#ef4444;">
+                            <span>Soğan</span>
+                        </label>
+                        <label style="display:flex; align-items:center; gap:8px; padding:8px 12px; border:1px solid var(--border); border-radius:10px; cursor:pointer; font-size:0.9rem;">
+                            <input type="checkbox" class="remove-item-cb option-checkbox" data-name="Domatesiz" style="width:18px; height:18px; accent-color:#ef4444;">
+                            <span>Domates</span>
+                        </label>
+                        <label style="display:flex; align-items:center; gap:8px; padding:8px 12px; border:1px solid var(--border); border-radius:10px; cursor:pointer; font-size:0.9rem;">
+                            <input type="checkbox" class="remove-item-cb option-checkbox" data-name="Yeşilliksiz" style="width:18px; height:18px; accent-color:#ef4444;">
+                            <span>Yeşillik</span>
+                        </label>
+                        <label style="display:flex; align-items:center; gap:8px; padding:8px 12px; border:1px solid var(--border); border-radius:10px; cursor:pointer; font-size:0.9rem;">
+                            <input type="checkbox" class="remove-item-cb option-checkbox" data-name="Turşusuz" style="width:18px; height:18px; accent-color:#ef4444;">
+                            <span>Turşu</span>
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="options-group" style="margin-bottom:1.25rem;">
+                    <div class="options-group-title" style="margin-bottom:0.5rem; font-size:1rem; color:var(--text); font-weight:700;">Ekstra İlaveler</div>
+                    <div style="display:flex; flex-direction:column; gap:8px;">
+                        <label style="display:flex; align-items:center; justify-content:space-between; padding:10px 14px; border:1px solid var(--border); border-radius:12px; cursor:pointer;">
+                            <span style="font-weight:500; font-size:0.9rem;">Özel Şef Sosu</span>
+                            <div style="display:flex; align-items:center; gap:8px;">
+                                <span style="font-size:0.85rem; font-weight:600; color:var(--primary);">+15 ₺</span>
+                                <input type="checkbox" class="extra-item-cb option-checkbox" data-name="+Özel Şef Sosu" data-price="15" value="15" style="width:18px; height:18px; accent-color:var(--primary);" onchange="calculateTotal()">
+                            </div>
+                        </label>
+                        <label style="display:flex; align-items:center; justify-content:space-between; padding:10px 14px; border:1px solid var(--border); border-radius:12px; cursor:pointer;">
+                            <span style="font-weight:500; font-size:0.9rem;">Ekstra Kaşar Peyniri</span>
+                            <div style="display:flex; align-items:center; gap:8px;">
+                                <span style="font-size:0.85rem; font-weight:600; color:var(--primary);">+20 ₺</span>
+                                <input type="checkbox" class="extra-item-cb option-checkbox" data-name="+Ekstra Kaşar" data-price="20" value="20" style="width:18px; height:18px; accent-color:var(--primary);" onchange="calculateTotal()">
+                            </div>
+                        </label>
+                    </div>
+                </div>`;
+            }
             
             const dynamicContainer = document.getElementById('dynamic-options-container');
             if (dynamicContainer) {
@@ -730,15 +1107,38 @@
             });
             let priceEl = document.getElementById('bs-total-price');
             if (priceEl) {
-                priceEl.textContent = `₺${total.toFixed(2)}`;
+                priceEl.textContent = '₺' + total.toFixed(2);
             }
         }
+
+        let cartItemsArray = [];
 
         function submitBottomSheet() {
             closeBottomSheet();
             if(clickedButtonElement) {
-                // Eklenen toplam fiyatla animasyonu tetikle
                 const calculatedPrice = parseFloat(document.getElementById('bs-total-price').textContent.replace('₺', ''));
+                
+                // Seçili özellikleri topla
+                let secilenOzellikler = [];
+                document.querySelectorAll('.remove-item-cb:checked').forEach(cb => {
+                    secilenOzellikler.push(cb.getAttribute('data-name'));
+                });
+                document.querySelectorAll('.extra-item-cb:checked').forEach(cb => {
+                    secilenOzellikler.push(cb.getAttribute('data-name'));
+                });
+                
+                // Urun datasini al
+                let urunData;
+                try { urunData = JSON.parse(clickedButtonElement.getAttribute('data-urun')); } catch(e) {}
+                
+                if (urunData) {
+                    cartItemsArray.push({
+                        ad: urunData.ad,
+                        fiyat: calculatedPrice,
+                        ozellikler: secilenOzellikler
+                    });
+                }
+                
                 addToCart(clickedButtonElement, null, calculatedPrice);
             }
         }
@@ -813,6 +1213,112 @@
 
             }, 600); // Wait for transition
         }
+
+        function openCartModal() {
+            if (cartItemsArray.length === 0) return;
+            
+            const container = document.getElementById('cart-items-container');
+            let html = '';
+            
+            cartItemsArray.forEach((item, idx) => {
+                let ozellikHtml = '';
+                if (item.ozellikler && item.ozellikler.length > 0) {
+                    item.ozellikler.forEach(oz => {
+                        let badgeStyle = oz.startsWith('Laktozsuz') ? 'background:#eff6ff; color:#3b82f6;' : 
+                                       (oz.startsWith('+') ? 'background:#ecfdf5; color:#10b981;' : 'background:#fef2f2; color:#ef4444;');
+                        ozellikHtml += `<span style="font-size:0.75rem; padding:2px 8px; border-radius:6px; font-weight:600; ${badgeStyle} display:inline-block; margin-right:4px; margin-top:4px;">${oz}</span>`;
+                    });
+                }
+                
+                html += `
+                <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid var(--border);">
+                    <div style="flex:1; padding-right:10px;">
+                        <div style="font-weight:600; font-size:1rem; color:var(--text);">${item.ad}</div>
+                        <div>${ozellikHtml}</div>
+                    </div>
+                    <div style="display:flex; align-items:center; gap:12px;">
+                        <span style="font-weight:700; color:var(--primary); font-size:1.05rem;">₺${item.fiyat.toFixed(2)}</span>
+                        <button onclick="removeCartItem(${idx})" style="background:#fef2f2; color:#ef4444; border:none; width:32px; height:32px; border-radius:8px; display:flex; align-items:center; justify-content:center; cursor:pointer; transition:0.2s;"><i class="fa-solid fa-trash-can"></i></button>
+                    </div>
+                </div>`;
+            });
+            
+            container.innerHTML = html;
+            document.getElementById('cart-modal-total').textContent = '₺' + cartTotal.toFixed(2);
+            document.getElementById('cart-modal').classList.add('active');
+            document.getElementById('cart-overlay').classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeCartModal() {
+            document.getElementById('cart-modal').classList.remove('active');
+            document.getElementById('cart-overlay').classList.remove('active');
+            document.body.style.overflow = '';
+        }
+
+        function removeCartItem(idx) {
+            const item = cartItemsArray[idx];
+            if (item) {
+                cartTotal -= item.fiyat;
+                cartCount--;
+                cartItemsArray.splice(idx, 1);
+                
+                document.getElementById('cart-badge').textContent = cartCount;
+                document.getElementById('fab-total').textContent = '₺' + Math.max(0, cartTotal).toFixed(2);
+                
+                if (cartCount === 0) {
+                    document.getElementById('cart-badge').classList.remove('active');
+                    document.getElementById('view-cart-btn').style.display = 'none';
+                    closeCartModal();
+                } else {
+                    openCartModal(); // Re-render
+                }
+            }
+        }
+
+        function submitOrder() {
+            let qrCode = (document.getElementById('qrcode_val') ? document.getElementById('qrcode_val').value : '') || localStorage.getItem('menu_qrcode') || '';
+            if (!qrCode) {
+                showCustomAlert('Masa Bilgisi Gerekli', 'Masa bilgisi bulunamadı! Lütfen sipariş verebilmek için masanızdaki QR kodu okutup tekrar deneyin.', 'warning');
+                return;
+            }
+            
+            const btn = document.getElementById('btn-submit-order');
+            btn.disabled = true;
+            btn.querySelector('span').textContent = 'Gönderiliyor...';
+
+            fetch('/api/v1/siparis/kaydet/' + qrCode, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                },
+                body: JSON.stringify({
+                    items: cartItemsArray
+                })
+            })
+            .then(res => res.json())
+            .then(data => {
+                btn.disabled = false;
+                btn.querySelector('span').textContent = 'Siparişiniz Alındı!';
+                btn.style.background = '#10b981';
+                
+                setTimeout(() => {
+                    cartItemsArray = [];
+                    cartCount = 0;
+                    cartTotal = 0;
+                    document.getElementById('cart-badge').classList.remove('active');
+                    document.getElementById('view-cart-btn').style.display = 'none';
+                    closeCartModal();
+                    showCustomAlert('Harika! Siparişiniz Alındı', 'Siparişiniz masanıza özel olarak mutfağa iletilmiştir. Afiyet olsun!', 'success');
+                }, 800);
+            })
+            .catch(err => {
+                btn.disabled = false;
+                btn.querySelector('span').textContent = 'Sipariş Ver';
+                showCustomAlert('Sipariş Hatası', 'Sipariş gönderilirken bir hata oluştu. Lütfen garson veya kasanızla iletişime geçin.', 'error');
+            });
+        }
     </script>
     <style>
         @keyframes slideUp {
@@ -820,5 +1326,6 @@
             to { transform: translate(-50%, 0); opacity: 1; }
         }
     </style>
+
 </body>
 </html>

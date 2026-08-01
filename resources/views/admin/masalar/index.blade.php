@@ -132,6 +132,27 @@
     .badge-dolu { background: #fef2f2; color: #ef4444; }
     .badge-bos { background: #f0fdf4; color: #22c55e; }
 
+    @keyframes alertPulse {
+        0% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.7); transform: scale(1); }
+        70% { box-shadow: 0 0 0 10px rgba(245, 158, 11, 0); transform: scale(1.02); }
+        100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); transform: scale(1); }
+    }
+    .garson-cagri-rozet {
+        background: linear-gradient(135deg, #f59e0b 0%, #ea580c 100%);
+        color: white;
+        padding: 8px 12px;
+        border-radius: 12px;
+        font-size: 0.85rem;
+        font-weight: 700;
+        margin: 30px 10px 0 10px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        animation: alertPulse 2s infinite;
+        position: relative;
+        z-index: 5;
+    }
+
     .header-actions {
         display: flex;
         justify-content: space-between;
@@ -264,6 +285,14 @@
             <h4><i class="fa-solid fa-credit-card"></i> Kredi Kartı</h4>
             <p class="amount">₺{{ number_format($gunluk_kasa->kredi_karti_toplam ?? 0, 2, ',', '.') }}</p>
         </div>
+        <div class="kasa-item">
+            <h4><i class="fa-solid fa-utensils"></i> Yemek Kartı</h4>
+            <p class="amount">₺{{ number_format($gunluk_kasa->yemek_karti_toplam ?? 0, 2, ',', '.') }}</p>
+        </div>
+        <div class="kasa-item">
+            <h4><i class="fa-solid fa-book"></i> Veresiye</h4>
+            <p class="amount">₺{{ number_format($gunluk_kasa->veresiye_toplam ?? 0, 2, ',', '.') }}</p>
+        </div>
         <div class="kasa-item" style="background: rgba(255,255,255,0.3); border-color: rgba(255,255,255,0.5);">
             <h4><i class="fa-solid fa-sack-dollar"></i> Toplam Ciro</h4>
             <p class="amount">₺{{ number_format($gunluk_kasa->genel_toplam ?? 0, 2, ',', '.') }}</p>
@@ -312,35 +341,80 @@
     </div>
 </div>
 
-<div class="header-actions">
+<div class="header-actions" style="display: flex; gap: 10px; align-items: center; justify-content: space-between;">
     <h3 style="font-size: 1.25rem; font-weight: 600; margin: 0; color: #1e293b;">Tüm Masalar</h3>
-    <button class="btn btn-secondary" onclick="location.reload()" style="background: white; color: #64748b; border: 1px solid #e2e8f0; border-radius: 8px;">
-        <i class="fa-solid fa-rotate-right"></i> Yenile
-    </button>
+    <div style="display: flex; gap: 10px;">
+        <button class="btn btn-primary" onclick="openMasaEkleModal()" style="border-radius: 8px;">
+            <i class="fa-solid fa-plus"></i> Yeni Masa Ekle
+        </button>
+        <button class="btn btn-secondary" onclick="location.reload()" style="background: white; color: #64748b; border: 1px solid #e2e8f0; border-radius: 8px;">
+            <i class="fa-solid fa-rotate-right"></i> Yenile
+        </button>
+    </div>
 </div>
 
 <div class="masalar-grid">
     @forelse($masalar as $masa)
-        <div class="masa-card {{ $masa->durum == 1 ? 'dolu' : 'bos' }}" onclick="openMasaModal('{{ $masa->isim }}')">
-            <div class="masa-icon">
-                <i class="fa-solid fa-chair"></i>
+        <div class="masa-card {{ $masa->durum == 1 ? 'dolu' : 'bos' }}" style="padding-bottom: 0;">
+            <!-- Edit & Delete Buttons on Top Right -->
+            <div style="position: absolute; top: 10px; right: 10px; display: flex; gap: 5px; z-index: 10;">
+                <button type="button" onclick="openEditModal({{ $masa->id }}, '{{ $masa->isim }}')" style="background: #3b82f6; color: white; border: none; border-radius: 4px; width: 28px; height: 28px; cursor: pointer; display: flex; align-items: center; justify-content: center;">
+                    <i class="fa-solid fa-pen" style="font-size: 0.8rem;"></i>
+                </button>
+                <form action="/admin/masalar/{{ $masa->id }}" method="POST" style="margin: 0;" onsubmit="return confirm('Bu masayı tamamen SİLMEK istediğinize emin misiniz?');">
+                    <input type="hidden" name="_token" value="{{ csrf_token() }}">
+                    <input type="hidden" name="_method" value="DELETE">
+                    <button type="submit" style="background: #ef4444; color: white; border: none; border-radius: 4px; width: 28px; height: 28px; cursor: pointer; display: flex; align-items: center; justify-content: center;">
+                        <i class="fa-solid fa-trash" style="font-size: 0.8rem;"></i>
+                    </button>
+                </form>
             </div>
-            
-            @if($masa->durum == 1)
-                <div class="masa-status-badge badge-dolu">Dolu</div>
-            @else
-                <div class="masa-status-badge badge-bos">Boş</div>
+
+            @php
+                $aktifCagri = isset($cagrilar) ? ($cagrilar->where('Masa_id', $masa->id)->first() ?? $cagrilar->where('Masaismi', $masa->isim)->first()) : null;
+            @endphp
+            @if($aktifCagri)
+                <div class="garson-cagri-rozet">
+                    <span style="display: flex; align-items: center; gap: 6px;">
+                        <i class="fa-solid fa-bell fa-bounce" style="font-size: 1.1rem;"></i> Garson Çağrıldı!
+                    </span>
+                    <form action="{{ route('admin.masalar.completeCall', $aktifCagri->id) }}" method="POST" style="margin: 0;" title="Çağrıyı Kapat (İlgilenildi)">
+                        @csrf
+                        <button type="submit" style="background: #ffffff; color: #ea580c; border: none; border-radius: 6px; width: 26px; height: 26px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-weight: 800; transition: 0.2s;">
+                            <i class="fa-solid fa-check"></i>
+                        </button>
+                    </form>
+                </div>
             @endif
-            
-            <div class="masa-name">{{ $masa->isim }}</div>
-            
-            @if($masa->durum == 1 && $masa->guncel_tutar > 0)
-                <div class="masa-amount">₺{{ number_format($masa->guncel_tutar, 2, ',', '.') }}</div>
-            @else
-                <div style="height: 1.5rem;"></div> <!-- Boşluk koruması -->
-            @endif
-            
-            <div style="font-size: 0.8rem; color: #94a3b8; margin-top: 5px;">Detayları görmek için tıklayın</div>
+
+            <div style="cursor: pointer; padding: {{ $aktifCagri ? '0.75rem' : '1.5rem' }} 1rem 0.5rem;" onclick="openMasaModal('{{ $masa->isim }}', {{ $masa->id }}, {{ $masa->durum }}, {{ $masa->guncel_tutar }})">
+                <div class="masa-icon">
+                    <i class="fa-solid fa-chair"></i>
+                </div>
+                
+                @if($masa->durum == 1)
+                    <div class="masa-status-badge badge-dolu">Dolu</div>
+                @else
+                    <div class="masa-status-badge badge-bos">Boş</div>
+                @endif
+                
+                <div class="masa-name">{{ $masa->isim }}</div>
+                
+                @if($masa->durum == 1 && $masa->guncel_tutar > 0)
+                    <div class="masa-amount">₺{{ number_format($masa->guncel_tutar, 2, ',', '.') }}</div>
+                @else
+                    <div style="height: 1.5rem;"></div> <!-- Boşluk koruması -->
+                @endif
+                
+                <div style="font-size: 0.8rem; color: #94a3b8; margin-top: 5px; margin-bottom: 15px;">Siparişleri görmek için tıklayın</div>
+            </div>
+
+            <!-- QR Kod Butonu -->
+            <div style="padding: 0 1rem 1rem 1rem;">
+                <button type="button" onclick="openQrModal('{{ $masa->isim }}', '{{ (isset($qrCodes[$masa->id]) && !empty($qrCodes[$masa->id]->QRCode)) ? $qrCodes[$masa->id]->QRCode : $masa->slug }}')" style="width: 100%; background: #10b981; color: white; border: none; border-radius: 8px; padding: 8px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                    <i class="fa-solid fa-qrcode"></i> QR Kod
+                </button>
+            </div>
         </div>
     @empty
         <div style="grid-column: 1 / -1; text-align: center; padding: 3rem; background: white; border-radius: 12px; border: 1px dashed #cbd5e1; color: #64748b;">
@@ -367,11 +441,13 @@
     // Laravel'den gelen sipariş verisini JS objesine dönüştürüyoruz
     const masaSiparisleri = @json($masa_siparisleri);
 
-    function openMasaModal(masaIsim) {
-        document.getElementById('modalMasaIsim').innerText = masaIsim + ' Sipariş Detayları';
+    function openMasaModal(masaIsim, masaId, durum, guncelTutar) {
+        document.getElementById('modalMasaIsim').innerText = masaIsim + ' Detayları';
         
         let contentHtml = '';
+        let csrfToken = '{{ csrf_token() }}';
         
+        // Sipariş listesi
         if (masaSiparisleri[masaIsim] && masaSiparisleri[masaIsim].length > 0) {
             let siparisler = masaSiparisleri[masaIsim];
             let toplamTutar = 0;
@@ -397,10 +473,24 @@
                 let araToplam = sFiyat * sAdet;
                 toplamTutar += araToplam;
                 
+                let ozellikEtiketleri = '';
+                if (s.ozellikler && s.ozellikler !== 'null' && s.ozellikler !== '') {
+                    try {
+                        let ozList = typeof s.ozellikler === 'string' ? JSON.parse(s.ozellikler) : s.ozellikler;
+                        if (Array.isArray(ozList) && ozList.length > 0) {
+                            ozellikEtiketleri = '<div style="margin-top:4px;">' + ozList.map(o => {
+                                let bg = o.startsWith('Laktoz') ? '#eff6ff' : (o.startsWith('+') ? '#ecfdf5' : '#fef2f2');
+                                let cl = o.startsWith('Laktoz') ? '#2563eb' : (o.startsWith('+') ? '#059669' : '#dc2626');
+                                return `<span style="font-size:0.75rem; background:${bg}; color:${cl}; border: 1px solid ${cl}40; padding:2px 6px; border-radius:4px; font-weight:600; display:inline-block; margin-right:4px; margin-top:2px;">${o}</span>`;
+                            }).join('') + '</div>';
+                        }
+                    } catch(e) {}
+                }
+                
                 contentHtml += `
                     <tr>
                         <td>${sSaat}</td>
-                        <td style="font-weight: 500;">${s.urun_adi}</td>
+                        <td style="font-weight: 500;">${s.urun_adi}${ozellikEtiketleri}</td>
                         <td>${sAdet}</td>
                         <td>₺${sFiyat.toFixed(2)}</td>
                         <td style="font-weight: 600; color: #ef4444;">₺${araToplam.toFixed(2)}</td>
@@ -408,24 +498,97 @@
                 `;
             });
             
+            // Eğer sipariş toplamı güncel tutardan büyükse, güncel tutarı sipariş toplamı olarak kabul edelim (fallback)
+            if (toplamTutar > guncelTutar) guncelTutar = toplamTutar;
+
             contentHtml += `
                     </tbody>
                 </table>
                 <div style="margin-top: 15px; text-align: right; font-size: 1.25rem; font-weight: 700; color: #1e293b;">
-                    Genel Toplam: <span style="color: #ef4444;">₺${toplamTutar.toFixed(2)}</span>
+                    Genel Toplam: <span style="color: #ef4444;">₺${guncelTutar.toFixed(2)}</span>
                 </div>
             `;
+            if (durum == 1 || toplamTutar > 0) {
+                contentHtml += `
+                    <div style="margin-top: 20px; padding-top: 15px; border-top: 1px solid #e2e8f0;">
+                        <div style="font-size: 0.9rem; font-weight: 700; color: #334155; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+                            <i class="fa-solid fa-wallet" style="color: #64748b;"></i> Ödeme Seçenekleri & Masayı Boşaltma:
+                        </div>
+                        <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+                            <button type="button" onclick="showCustomConfirmMasa('${masaId}', '${masaIsim}', 'Nakit', ${guncelTutar}, '${csrfToken}')" style="flex: 1; min-width: 140px; background: #10b981; color: white; border: none; border-radius: 10px; padding: 12px; font-size: 0.95rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25); transition: 0.2s;">
+                                <i class="fa-solid fa-money-bill-wave" style="font-size: 1.1rem;"></i> Nakit Tahsilat
+                            </button>
+                            <button type="button" onclick="showCustomConfirmMasa('${masaId}', '${masaIsim}', 'Kredi Kartı', ${guncelTutar}, '${csrfToken}')" style="flex: 1; min-width: 140px; background: #3b82f6; color: white; border: none; border-radius: 10px; padding: 12px; font-size: 0.95rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.25); transition: 0.2s;">
+                                <i class="fa-solid fa-credit-card" style="font-size: 1.1rem;"></i> Kredi Kartı
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }
         } else {
             contentHtml = `
                 <div style="text-align: center; padding: 2rem; color: #64748b;">
                     <i class="fa-solid fa-receipt" style="font-size: 2.5rem; margin-bottom: 10px; opacity: 0.5;"></i>
-                    <p>Bu masaya ait açık sipariş detayı bulunmuyor veya masaüstü uygulamasından henüz detaylar gönderilmedi.</p>
+                    <p>Bu masaya ait açık sipariş detayı bulunmuyor.</p>
                 </div>
             `;
+            if (durum == 1) {
+                contentHtml += `
+                    <div style="margin-top: 15px; border-top: 1px solid #e2e8f0; padding-top: 15px;">
+                        <button type="button" onclick="showCustomConfirmMasa('${masaId}', '${masaIsim}', 'Sıfırla', 0, '${csrfToken}')" style="width: 100%; background: #ef4444; color: white; border: none; border-radius: 10px; padding: 12px; font-size: 0.95rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.25); transition: 0.2s;">
+                            <i class="fa-solid fa-rotate-left" style="font-size: 1.1rem;"></i> Masayı Boş Olarak İşaretle
+                        </button>
+                    </div>
+                `;
+            }
         }
-        
+
+        if(document.getElementById('siparisDetayModal')) document.getElementById('siparisDetayModal').style.display = 'none';
         document.getElementById('modalSiparisContent').innerHTML = contentHtml;
         document.getElementById('masaModal').classList.add('active');
+    }
+
+    function openQrModal(masaIsim, qrCode) {
+        document.getElementById('qrModalTitle').innerText = masaIsim + ' QR Kodu';
+        
+        let url = '{{ url("/masa") }}/' + qrCode; // Yeni rotaya uyumlu
+        let qrImageUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=' + encodeURIComponent(url);
+        
+        document.getElementById('qrModalImage').src = qrImageUrl;
+        document.getElementById('qrModalLink').href = url;
+        document.getElementById('qrModalLink').innerText = url;
+        
+        document.getElementById('qrModal').classList.add('active');
+    }
+
+    function closeQrModal() {
+        document.getElementById('qrModal').classList.remove('active');
+    }
+
+    function openEditModal(masaId, masaIsim) {
+        document.getElementById('editMasaId').value = masaId;
+        document.getElementById('editMasaIsimInput').value = masaIsim;
+        document.getElementById('editMasaForm').action = '/admin/masalar/' + masaId;
+        
+        document.getElementById('editMasaModal').style.display = 'block';
+        document.getElementById('modalOverlay').style.display = 'block';
+    }
+
+    function closeEditModal() {
+        document.getElementById('editMasaModal').style.display = 'none';
+        document.getElementById('modalOverlay').style.display = 'none';
+    }
+
+    function openMasaEkleModal() {
+        document.getElementById('masaEkleModal').style.display = 'block';
+        document.getElementById('modalOverlay').style.display = 'block';
+    }
+
+
+
+    function closeMasaEkleModal() {
+        document.getElementById('masaEkleModal').style.display = 'none';
+        document.getElementById('modalOverlay').style.display = 'none';
     }
 
     function closeMasaModal() {
@@ -447,9 +610,120 @@
     // Modal dışına tıklayınca kapatma
     window.onclick = function(event) {
         let modal = document.getElementById('masaModal');
+        let qrModal = document.getElementById('qrModal');
         if (event.target == modal) {
             closeMasaModal();
         }
+        if (event.target == qrModal) {
+            closeQrModal();
+        }
+    }
+</script>
+
+<!-- Masa Ekle Modal -->
+<div id="masaEkleModal" class="modal" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); background:white; padding:24px; border-radius:16px; z-index:1001; width:90%; max-width:400px; box-shadow:0 25px 50px -12px rgba(0,0,0,0.25);">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+        <h3 style="margin:0; font-size:1.25rem;">Yeni Masa Ekle</h3>
+        <button onclick="closeMasaEkleModal()" type="button" style="background:none; border:none; font-size:1.5rem; cursor:pointer; color:#64748b;">&times;</button>
+    </div>
+    <form action="{{ route('admin.masalar.store') }}" method="POST">
+        @csrf
+        <div style="margin-bottom:1rem;">
+            <label style="display:block; margin-bottom:0.5rem; font-weight:500;">Masa Adı</label>
+            <input type="text" name="isim" class="form-control" placeholder="Örn: Masa 1, Bahçe 2" required style="width:100%; padding:0.5rem; border:1px solid #cbd5e1; border-radius:8px;">
+        </div>
+        <button type="submit" class="btn btn-primary" style="width:100%; border-radius:8px; padding:0.75rem; background:#3b82f6; color:white; border:none; font-weight:600;">Masayı Ekle ve Sistemi Güncelle</button>
+    </form>
+</div>
+
+<!-- Masa Düzenle Modal -->
+<div id="editMasaModal" class="modal" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); background:white; padding:24px; border-radius:16px; z-index:1001; width:90%; max-width:400px; box-shadow:0 25px 50px -12px rgba(0,0,0,0.25);">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+        <h3 style="margin:0; font-size:1.25rem;">Masa İsmini Düzenle</h3>
+        <button onclick="closeEditModal()" type="button" style="background:none; border:none; font-size:1.5rem; cursor:pointer; color:#64748b;">&times;</button>
+    </div>
+    <form id="editMasaForm" method="POST">
+        @csrf
+        @method('PUT')
+        <input type="hidden" id="editMasaId">
+        <div style="margin-bottom:1rem;">
+            <label style="display:block; margin-bottom:0.5rem; font-weight:500;">Yeni Masa Adı</label>
+            <input type="text" id="editMasaIsimInput" name="isim" class="form-control" required style="width:100%; padding:0.5rem; border:1px solid #cbd5e1; border-radius:8px;">
+        </div>
+        <button type="submit" class="btn btn-primary" style="width:100%; border-radius:8px; padding:0.75rem; background:#10b981; color:white; border:none; font-weight:600;">Kaydet</button>
+    </form>
+</div>
+
+<!-- QR Kod Modal -->
+<div id="qrModal" class="custom-modal">
+    <div class="modal-content" style="text-align: center; max-width: 400px;">
+        <i class="fa-solid fa-xmark close-modal" onclick="closeQrModal()" style="position: absolute; right: 15px; top: 15px; font-size: 1.5rem; cursor: pointer; color: #64748b;"></i>
+        <h3 id="qrModalTitle" style="margin-top: 0; color: #1e293b; margin-bottom: 20px;">Masa QR Kodu</h3>
+        
+        <img id="qrModalImage" src="" alt="QR Kod" style="width: 250px; height: 250px; margin: 0 auto; display: block; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px; background: white;">
+        
+        <div style="margin-top: 15px; font-size: 0.85rem;">
+            <a id="qrModalLink" href="#" target="_blank" style="color: #3b82f6; text-decoration: none; word-break: break-all;"></a>
+        </div>
+        
+        <button type="button" onclick="window.print()" class="btn" style="margin-top: 20px; width: 100%; background: #10b981; color: white; border: none; border-radius: 8px; padding: 10px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 1rem;">
+            <i class="fa-solid fa-print"></i> Yazdır
+        </button>
+    </div>
+</div>
+
+<!-- Custom Hesap Kapatma Onay Modalı -->
+<div id="customConfirmMasaModal" class="custom-modal" style="z-index: 2000;">
+    <div class="modal-content" style="max-width: 420px; text-align: center; padding: 25px; border-radius: 16px; box-shadow: 0 20px 40px rgba(0,0,0,0.2);">
+        <div id="confirmMasaIconWrap" style="width: 65px; height: 65px; background: #ecfdf5; color: #10b981; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 15px; font-size: 2rem; box-shadow: 0 4px 15px rgba(16,185,129,0.15);">
+            <i class="fa-solid fa-wallet" id="confirmMasaIcon"></i>
+        </div>
+        <h3 style="margin: 0 0 10px; color: #1e293b; font-size: 1.3rem;">Hesap Kapatma Onayı</h3>
+        <p id="confirmMasaText" style="color: #64748b; font-size: 0.95rem; line-height: 1.5; margin-bottom: 20px;"></p>
+        
+        <form id="confirmMasaForm" method="POST" style="margin: 0; display: flex; gap: 12px;">
+            <input type="hidden" name="_token" id="confirmMasaToken" value="">
+            <input type="hidden" name="odeme_turu" id="confirmMasaOdemeTuru" value="">
+            
+            <button type="button" onclick="document.getElementById('customConfirmMasaModal').classList.remove('active')" style="flex: 1; background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; border-radius: 10px; padding: 12px; font-weight: 700; font-size: 0.95rem; cursor: pointer; transition: 0.2s;">
+                İptal
+            </button>
+            <button type="submit" id="confirmMasaSubmitBtn" style="flex: 1; background: #10b981; color: white; border: none; border-radius: 10px; padding: 12px; font-weight: 700; font-size: 0.95rem; cursor: pointer; box-shadow: 0 4px 15px rgba(16,185,129,0.3); transition: 0.2s;">
+                Evet, Tahsil Et
+            </button>
+        </form>
+    </div>
+</div>
+
+<script>
+    function showCustomConfirmMasa(masaId, masaIsim, odemeTuru, tutar, token) {
+        document.getElementById('confirmMasaForm').action = '/admin/masalar/' + masaId + '/kapat';
+        document.getElementById('confirmMasaToken').value = token;
+        document.getElementById('confirmMasaOdemeTuru').value = odemeTuru === 'Sıfırla' ? 'Nakit' : odemeTuru;
+        
+        let txt = '';
+        let btn = document.getElementById('confirmMasaSubmitBtn');
+        let icn = document.getElementById('confirmMasaIcon');
+        let icnWrap = document.getElementById('confirmMasaIconWrap');
+        
+        if (odemeTuru === 'Sıfırla') {
+            txt = `<strong>${masaIsim}</strong> durumunu sipariş olmadan <strong>BOŞ</strong> konuma getirmek istiyor musunuz?`;
+            btn.innerHTML = '<i class="fa-solid fa-check"></i> Evet, Sıfırla';
+            btn.style.background = '#ef4444';
+            icn.className = 'fa-solid fa-rotate-left';
+            icnWrap.style.background = '#fef2f2';
+            icnWrap.style.color = '#ef4444';
+        } else {
+            txt = `<strong>${masaIsim}</strong> için toplam <strong style="color:#ef4444;">₺${parseFloat(tutar).toFixed(2)}</strong> tutarı <strong>${odemeTuru}</strong> ile tahsil edip masayı boşa çıkarmak istiyor musunuz?`;
+            btn.innerHTML = `<i class="fa-solid fa-check"></i> Evet, ${odemeTuru} Kapat`;
+            btn.style.background = odemeTuru === 'Kredi Kartı' ? '#3b82f6' : '#10b981';
+            icn.className = odemeTuru === 'Kredi Kartı' ? 'fa-solid fa-credit-card' : 'fa-solid fa-money-bill-wave';
+            icnWrap.style.background = odemeTuru === 'Kredi Kartı' ? '#eff6ff' : '#ecfdf5';
+            icnWrap.style.color = odemeTuru === 'Kredi Kartı' ? '#3b82f6' : '#10b981';
+        }
+        
+        document.getElementById('confirmMasaText').innerHTML = txt;
+        document.getElementById('customConfirmMasaModal').classList.add('active');
     }
 </script>
 @endsection

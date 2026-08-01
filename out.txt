@@ -1,0 +1,1 @@
+{"success":false,"message":"L\u00fctfen masan\u0131zdaki QR kodu okutarak sipari\u015f veriniz."}
