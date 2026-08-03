@@ -213,45 +213,45 @@
         @php
             $globalCagrilar = \App\Models\QrCodeCagri::where('Status', 0)->orderBy('Cagri_zamani', 'desc')->get();
         @endphp
-        <div id="global-waiter-banner" style="display: {{ $globalCagrilar->count() > 0 ? 'block' : 'none' }}; margin-bottom: 1.5rem;">
-            <div style="background: #ffffff; border: 1px solid #e2e8f0; border-left: 6px solid #f59e0b; border-radius: 14px; padding: 1.25rem 1.5rem; box-shadow: 0 14px 35px -5px rgba(245, 158, 11, 0.18), 0 4px 10px -3px rgba(0, 0, 0, 0.05); transition: all 0.3s ease;">
-                <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px dashed #cbd5e1; padding-bottom: 0.85rem; margin-bottom: 1rem; flex-wrap: wrap; gap: 12px;">
-                    <div style="display: flex; align-items: center; gap: 14px;">
-                        <div style="width: 44px; height: 44px; border-radius: 12px; background: linear-gradient(135deg, #fef3c7, #fde68a); color: #d97706; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; box-shadow: 0 4px 12px rgba(217, 119, 6, 0.22); border: 1px solid rgba(217, 119, 6, 0.2);">
+        <div id="global-waiter-banner" style="display: {{ $globalCagrilar->count() > 0 ? 'block' : 'none' }}; margin-bottom: 1.5rem; width: 100%; box-sizing: border-box; max-width: 100%;">
+            <div class="waiter-banner-box" style="background: #ffffff; border: 1px solid #e2e8f0; border-left: 6px solid #f59e0b; border-radius: 14px; padding: clamp(0.85rem, 2.5vw, 1.25rem) clamp(0.85rem, 3vw, 1.5rem); box-shadow: 0 14px 35px -5px rgba(245, 158, 11, 0.18), 0 4px 10px -3px rgba(0, 0, 0, 0.05); transition: all 0.3s ease; width: 100%; box-sizing: border-box;">
+                <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px dashed #cbd5e1; padding-bottom: 0.85rem; margin-bottom: 1rem; flex-wrap: wrap; gap: 10px; width: 100%; box-sizing: border-box;">
+                    <div style="display: flex; align-items: center; gap: clamp(8px, 2.5vw, 14px); flex: 1 1 min-content;">
+                        <div style="width: clamp(38px, 9vw, 44px); height: clamp(38px, 9vw, 44px); min-width: 38px; border-radius: 12px; background: linear-gradient(135deg, #fef3c7, #fde68a); color: #d97706; display: flex; align-items: center; justify-content: center; font-size: clamp(1.15rem, 3.5vw, 1.4rem); box-shadow: 0 4px 12px rgba(217, 119, 6, 0.22); border: 1px solid rgba(217, 119, 6, 0.2); flex-shrink: 0;">
                             <i class="fa-solid fa-bell-concierge" style="animation: bellShake 2s infinite cubic-bezier(.36,.07,.19,.97);"></i>
                         </div>
-                        <div>
-                            <h3 style="margin: 0; font-size: 1.15rem; font-weight: 800; color: #0f172a; letter-spacing: 0.2px;">Canlı Garson Çağrı Departmanı</h3>
-                            <span style="font-size: 0.84rem; color: #64748b; font-weight: 500;">Masa sipariş veya destek için personelinizin ilgisini bekliyor</span>
+                        <div style="min-width: 0;">
+                            <h3 style="margin: 0; font-size: clamp(0.95rem, 3vw, 1.15rem); font-weight: 800; color: #0f172a; letter-spacing: 0.2px; line-height: 1.25;">Canlı Garson Çağrı Departmanı</h3>
+                            <span style="font-size: clamp(0.75rem, 2vw, 0.84rem); color: #64748b; font-weight: 500; display: block; margin-top: 2px; line-height: 1.3;">Masa sipariş veya destek için personelinizin ilgisini bekliyor</span>
                         </div>
                     </div>
                     <div style="display: flex; align-items: center; gap: 8px;">
-                        <span id="global-waiter-count" style="background: #fffdf5; color: #b45309; border: 1.5px solid #fcd34d; font-weight: 800; padding: 6px 18px; border-radius: 25px; font-size: 0.88rem; display: flex; align-items: center; gap: 8px; box-shadow: 0 2px 6px rgba(245, 158, 11, 0.1);">
-                            <span style="width: 8px; height: 8px; border-radius: 50%; background: #f59e0b; display: inline-block; animation: ping 1.5s infinite;"></span>
+                        <span id="global-waiter-count" style="background: #fffdf5; color: #b45309; border: 1.5px solid #fcd34d; font-weight: 800; padding: 6px 14px; border-radius: 25px; font-size: clamp(0.78rem, 2.5vw, 0.88rem); display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 2px 6px rgba(245, 158, 11, 0.1); white-space: nowrap;">
+                            <span style="width: 8px; height: 8px; border-radius: 50%; background: #f59e0b; display: inline-block; animation: ping 1.5s infinite; flex-shrink: 0;"></span>
                             Bekleyen Çağrı: {{ $globalCagrilar->count() }}
                         </span>
                     </div>
                 </div>
                 
-                <div id="global-waiter-list" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1rem;">
+                <div id="global-waiter-list" style="display: flex; flex-wrap: wrap; gap: 1rem; width: 100%; box-sizing: border-box;">
                     @foreach($globalCagrilar as $cg)
-                        <div class="waiter-card-item" style="background: #f8fafc; border: 1.5px solid #e2e8f0; border-radius: 12px; padding: 1rem 1.25rem; display: flex; align-items: center; justify-content: space-between; gap: 1rem; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 2px 6px rgba(0,0,0,0.02);">
-                            <div style="display: flex; align-items: center; gap: 12px;">
-                                <div style="width: 40px; height: 40px; border-radius: 50%; background: #ffffff; color: #334155; display: flex; align-items: center; justify-content: center; font-size: 1.15rem; font-weight: 700; border: 1px solid #cbd5e1; box-shadow: 0 2px 5px rgba(0,0,0,0.04);">
+                        <div class="waiter-card-item" style="background: #f8fafc; border: 1.5px solid #e2e8f0; border-radius: 12px; padding: 0.85rem 1.15rem; display: flex; align-items: center; justify-content: space-between; gap: 0.85rem; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 2px 6px rgba(0,0,0,0.02); width: 310px; max-width: 100%; box-sizing: border-box; flex: 0 0 auto;">
+                            <div style="display: flex; align-items: center; gap: 12px; min-width: 0;">
+                                <div style="width: 40px; height: 40px; min-width: 40px; border-radius: 50%; background: #ffffff; color: #334155; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; font-weight: 700; border: 1px solid #cbd5e1; box-shadow: 0 2px 5px rgba(0,0,0,0.04); flex-shrink: 0;">
                                     <i class="fa-solid fa-chair" style="color: #64748b;"></i>
                                 </div>
-                                <div>
-                                    <div style="font-size: 1.08rem; font-weight: 800; color: #0f172a;">
+                                <div style="min-width: 0;">
+                                    <div style="font-size: 1.05rem; font-weight: 800; color: #0f172a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
                                         {{ $cg->Masaismi ?: 'Masa ' . $cg->Masa_id }}
                                     </div>
-                                    <div style="font-size: 0.8rem; color: #e11d48; font-weight: 700; display: flex; align-items: center; gap: 5px; margin-top: 2px;">
+                                    <div style="font-size: 0.78rem; color: #e11d48; font-weight: 700; display: flex; align-items: center; gap: 4px; margin-top: 2px; white-space: nowrap;">
                                         <i class="fa-solid fa-bolt" style="font-size: 0.75rem; animation: pulse 1s infinite;"></i> Garson Bekliyor
                                     </div>
                                 </div>
                             </div>
-                            <form action="{{ route('admin.masalar.completeCall', $cg->id) }}" method="POST" style="margin: 0;">
+                            <form action="{{ route('admin.masalar.completeCall', $cg->id) }}" method="POST" style="margin: 0; flex-shrink: 0;">
                                 @csrf
-                                <button type="submit" class="btn-complete-call" style="background: linear-gradient(135deg, #10b981, #059669); color: white; border: none; padding: 9px 18px; border-radius: 10px; font-weight: 800; font-size: 0.88rem; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 4px 14px rgba(16, 185, 129, 0.3); transition: all 0.2s;">
+                                <button type="submit" class="btn-complete-call" style="background: linear-gradient(135deg, #10b981, #059669); color: white; border: none; padding: 8px 15px; border-radius: 10px; font-weight: 800; font-size: 0.85rem; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 4px 14px rgba(16, 185, 129, 0.3); transition: all 0.2s; white-space: nowrap;">
                                     <span>İlgilenildi</span>
                                     <i class="fa-solid fa-check"></i>
                                 </button>
@@ -377,7 +377,7 @@
 
                     if (data && data.length > 0) {
                         banner.style.display = 'block';
-                        countBadge.innerHTML = `<span style="width: 8px; height: 8px; border-radius: 50%; background: #f59e0b; display: inline-block; animation: ping 1.5s infinite;"></span> Bekleyen Çağrı: ${data.length}`;
+                        countBadge.innerHTML = `<span style="width: 8px; height: 8px; border-radius: 50%; background: #f59e0b; display: inline-block; animation: ping 1.5s infinite; flex-shrink: 0;"></span> Bekleyen Çağrı: ${data.length}`;
                         
                         let html = '';
                         let token = "{{ csrf_token() }}";
@@ -385,23 +385,23 @@
                             let masaAd = cg.Masaismi ? cg.Masaismi : ('Masa ' + cg.Masa_id);
                             let actionUrl = "{{ url('admin/masalar/cagri-tamamla') }}/" + cg.id;
                             html += `
-                            <div class="waiter-card-item" style="background: #f8fafc; border: 1.5px solid #e2e8f0; border-radius: 12px; padding: 1rem 1.25rem; display: flex; align-items: center; justify-content: space-between; gap: 1rem; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 2px 6px rgba(0,0,0,0.02);">
-                                <div style="display: flex; align-items: center; gap: 12px;">
-                                    <div style="width: 40px; height: 40px; border-radius: 50%; background: #ffffff; color: #334155; display: flex; align-items: center; justify-content: center; font-size: 1.15rem; font-weight: 700; border: 1px solid #cbd5e1; box-shadow: 0 2px 5px rgba(0,0,0,0.04);">
+                            <div class="waiter-card-item" style="background: #f8fafc; border: 1.5px solid #e2e8f0; border-radius: 12px; padding: 0.85rem 1.15rem; display: flex; align-items: center; justify-content: space-between; gap: 0.85rem; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 2px 6px rgba(0,0,0,0.02); width: 310px; max-width: 100%; box-sizing: border-box; flex: 0 0 auto;">
+                                <div style="display: flex; align-items: center; gap: 12px; min-width: 0;">
+                                    <div style="width: 40px; height: 40px; min-width: 40px; border-radius: 50%; background: #ffffff; color: #334155; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; font-weight: 700; border: 1px solid #cbd5e1; box-shadow: 0 2px 5px rgba(0,0,0,0.04); flex-shrink: 0;">
                                         <i class="fa-solid fa-chair" style="color: #64748b;"></i>
                                     </div>
-                                    <div>
-                                        <div style="font-size: 1.08rem; font-weight: 800; color: #0f172a;">
+                                    <div style="min-width: 0;">
+                                        <div style="font-size: 1.05rem; font-weight: 800; color: #0f172a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
                                             ${masaAd}
                                         </div>
-                                        <div style="font-size: 0.8rem; color: #e11d48; font-weight: 700; display: flex; align-items: center; gap: 5px; margin-top: 2px;">
+                                        <div style="font-size: 0.78rem; color: #e11d48; font-weight: 700; display: flex; align-items: center; gap: 4px; margin-top: 2px; white-space: nowrap;">
                                             <i class="fa-solid fa-bolt" style="font-size: 0.75rem; animation: pulse 1s infinite;"></i> Garson Bekliyor
                                         </div>
                                     </div>
                                 </div>
-                                <form action="${actionUrl}" method="POST" style="margin: 0;">
+                                <form action="${actionUrl}" method="POST" style="margin: 0; flex-shrink: 0;">
                                     <input type="hidden" name="_token" value="${token}">
-                                    <button type="submit" class="btn-complete-call" style="background: linear-gradient(135deg, #10b981, #059669); color: white; border: none; padding: 9px 18px; border-radius: 10px; font-weight: 800; font-size: 0.88rem; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 4px 14px rgba(16, 185, 129, 0.3); transition: all 0.2s;">
+                                    <button type="submit" class="btn-complete-call" style="background: linear-gradient(135deg, #10b981, #059669); color: white; border: none; padding: 8px 15px; border-radius: 10px; font-weight: 800; font-size: 0.85rem; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 4px 14px rgba(16, 185, 129, 0.3); transition: all 0.2s; white-space: nowrap;">
                                         <span>İlgilenildi</span>
                                         <i class="fa-solid fa-check"></i>
                                     </button>
