@@ -725,5 +725,58 @@
         document.getElementById('confirmMasaText').innerHTML = txt;
         document.getElementById('customConfirmMasaModal').classList.add('active');
     }
+    // ─── Otomatik Yenileme (15 saniye) ───
+    let autoRefreshInterval = 15;
+    let autoRefreshCountdown = autoRefreshInterval;
+    let autoRefreshPaused = false;
+
+    function isAnyModalOpen() {
+        const masaModal = document.getElementById('masaDetayModal');
+        if (masaModal && masaModal.classList.contains('active')) return true;
+        const qrModal = document.getElementById('qrModal');
+        if (qrModal && qrModal.style.display === 'flex') return true;
+        const confirmModal = document.getElementById('customConfirmMasaModal');
+        if (confirmModal && confirmModal.classList.contains('active')) return true;
+        return false;
+    }
+
+    function updateCountdownBadge() {
+        let badge = document.getElementById('auto-refresh-badge');
+        if (!badge) return;
+        if (autoRefreshPaused || isAnyModalOpen()) {
+            badge.innerHTML = '<i class="fa-solid fa-pause" style="margin-right:4px;"></i> Durduruldu';
+            badge.style.background = '#f59e0b';
+        } else {
+            badge.innerHTML = '<i class="fa-solid fa-rotate-right fa-spin" style="margin-right:4px;"></i> ' + autoRefreshCountdown + 's';
+            badge.style.background = '#10b981';
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const refreshBtn = document.querySelector('.btn.btn-secondary[onclick="location.reload()"]');
+        if (refreshBtn) {
+            let badge = document.createElement('span');
+            badge.id = 'auto-refresh-badge';
+            badge.style.cssText = 'display:inline-flex; align-items:center; padding:5px 12px; border-radius:20px; font-size:0.78rem; font-weight:700; color:white; background:#10b981; margin-left:8px; cursor:pointer; transition:0.2s; user-select:none;';
+            badge.title = 'Tıklayarak otomatik yenilemeyi durdur/başlat';
+            badge.onclick = function() {
+                autoRefreshPaused = !autoRefreshPaused;
+                if (!autoRefreshPaused) autoRefreshCountdown = autoRefreshInterval;
+                updateCountdownBadge();
+            };
+            refreshBtn.parentElement.appendChild(badge);
+        }
+        updateCountdownBadge();
+        setInterval(() => {
+            if (isAnyModalOpen() || autoRefreshPaused) {
+                updateCountdownBadge();
+                return;
+            }
+            autoRefreshCountdown--;
+            updateCountdownBadge();
+            if (autoRefreshCountdown <= 0) location.reload();
+        }, 1000);
+    });
+
 </script>
 @endsection

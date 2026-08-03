@@ -33,52 +33,37 @@
             position: relative;
         }
 
-        /* Arka Plan Görseli */
+        /* Menüde Sadece Temiz Arka Plan Rengi Olabilecek - Görsel Yok */
         body::before {
             content: '';
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
             z-index: -2;
-            pointer-events: none;
-            @if($settings && $settings->karsilama_gorsel)
-                background: url('{{ asset("storage/" . $settings->karsilama_gorsel) }}') center/cover no-repeat;
-            @else
-                background: linear-gradient(135deg, #f0f8ff 0%, #f0fff4 100%);
-            @endif
+            background: linear-gradient(135deg, #f0f8ff 0%, #f0fff4 100%);
         }
 
-        /* Silikleştirme / Beyazlatma Efekti (Eski Haline Döndü) */
+        /* Perde Tamamen Kaldırıldı */
         body::after {
-            content: '';
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            z-index: -1;
-            pointer-events: none;
-            @if($settings && $settings->karsilama_gorsel)
-                background: rgba(244, 249, 249, 0.88); 
-                backdrop-filter: blur(8px); 
-                -webkit-backdrop-filter: blur(8px);
-            @else
-                background: transparent;
-            @endif
+            display: none !important;
         }
 
         /* Header & Sticky Categories */
         header { 
             position: relative;
-            background: rgba(244, 249, 249, 0.75); 
+            background: transparent; 
             z-index: 99; 
             padding-bottom: 0.5rem; 
+            max-width: 1100px;
+            margin: 0 auto;
         }
         .sticky-top-container {
             position: sticky; top: 0;
-            background: rgba(244, 249, 249, 0.95); 
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
+            background: transparent; 
             z-index: 100;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.03); 
+            box-shadow: none; 
         }
-        .top-bar { display: flex; justify-content: space-between; align-items: center; padding: 1rem 1.25rem; }
+        .top-bar { display: flex; justify-content: space-between; align-items: center; padding: 0.75rem 2.5rem; width: 100%; max-width: none; margin: 0; }
+        @media(max-width: 768px) { .top-bar { padding: 0.75rem 1rem; } }
         .logo { font-size: 1.25rem; font-weight: 700; color: var(--text); display: flex; align-items: center; gap: 8px; }
         .logo i { color: var(--primary); }
         
@@ -149,6 +134,7 @@
         .slider-btn.left { left: 5px; }
         .slider-btn.right { right: 5px; }
         .slider-wrapper-subcat { border-bottom: none; }
+        header .slider-wrapper { max-width: 780px; margin: 0 auto; width: 100%; }
         .subcat-pill {
             padding: 0.75rem 1.5rem; background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; font-size: 0.85rem; font-weight: 700; color: #64748b; white-space: nowrap; cursor: pointer; transition: 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.02); text-transform: uppercase;
         }
@@ -157,7 +143,7 @@
         }
 
         /* Search Bar & Filters */
-        .search-container { padding: 0.5rem 1.25rem 0.5rem; background: transparent; }
+        .search-container { padding: 0.5rem 1.25rem 0.5rem; background: transparent; max-width: 780px; margin: 0 auto; width: 100%; }
         .search-box { display: flex; align-items: center; background: var(--bg); border: 1px solid var(--border); border-radius: 20px; padding: 0.65rem 1rem; }
         .search-box i { color: #94a3b8; font-size: 1.1rem; margin-right: 0.75rem; }
         .search-box input { border: none; background: transparent; flex: 1; font-family: inherit; font-size: 0.95rem; color: var(--text); outline: none; }
@@ -174,14 +160,16 @@
         .text-red-500 { color: #ef4444; }
 
         /* Main Content */
-        main { padding: 0.5rem 1.25rem 2rem; }
+        main { padding: 1rem 2rem 2rem; max-width: 1100px; margin: 0 auto; }
         
         /* Category Section & Title spacing */
         .category-section { scroll-margin-top: 140px; }
-        .section-title { font-size: 1.35rem; font-weight: 700; margin-top: 1rem; margin-bottom: 1.5rem; text-transform: uppercase; letter-spacing: 0.5px; color: #1e293b; }
+        .section-title { font-size: 1.35rem; font-weight: 700; margin-top: 1rem; margin-bottom: 1.5rem; letter-spacing: 0.5px; color: #1e293b; }
 
-        /* Product Cards */
-        .product-list { display: flex; flex-direction: column; gap: 1rem; margin-bottom: 1rem; }
+        /* Product Cards - 4'lü Grid */
+        .product-list { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.5rem; margin-bottom: 1.5rem; }
+        @media (min-width: 600px) { .product-list { grid-template-columns: repeat(3, 1fr); gap: 2rem; } }
+        @media (min-width: 900px) { .product-list { grid-template-columns: repeat(4, 1fr); gap: 2rem; } }
         .product-modal-content {
             background: var(--surface); width: 100%; border-radius: 24px 24px 0 0; padding: 2rem 1.5rem; position: relative; max-height: 90vh; overflow-y: auto;
         }
@@ -217,24 +205,26 @@
             body { padding-bottom: 90px; } /* Menü alanı için boşluk */
         }
         
-        .product-card { background: var(--surface); border-radius: var(--radius); padding: 1rem; display: flex; gap: 1rem; box-shadow: var(--shadow); position: relative; }
+        .product-card { background: var(--surface); border-radius: 18px; padding: 0.75rem; display: flex; flex-direction: column; box-shadow: 0 2px 12px rgba(0,0,0,0.06); position: relative; transition: transform 0.2s ease, box-shadow 0.2s ease; border: 1px solid #f0f0f0; }
+        .product-card:hover { transform: translateY(-3px); box-shadow: 0 8px 25px rgba(0,0,0,0.1); }
         
-        .product-img-wrapper { width: 130px; height: 130px; border-radius: 20px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
-        .product-img { width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.05)); }
+        .product-img-wrapper { width: 100%; aspect-ratio: 4/3; border-radius: 14px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; background: transparent; overflow: hidden; padding: 4px; }
+        .product-img { width: 100%; height: 100%; object-fit: contain; border-radius: 10px; transition: transform 0.3s ease; }
+        .product-card:hover .product-img { transform: scale(1.03); }
         
-        .product-info { flex: 1; display: flex; flex-direction: column; justify-content: center; }
-        .product-name { font-size: 1rem; font-weight: 700; color: var(--text); line-height: 1.3; margin-bottom: 0.3rem; padding-right: 65px; } /* Space for absolute price badge */
+        .product-info { flex: 1; display: flex; flex-direction: column; padding: 0.6rem 0.15rem 0; }
+        .product-name { font-size: 0.88rem; font-weight: 700; color: var(--text); line-height: 1.3; margin-bottom: 0.25rem; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
         
         /* Badges (Etiketler) */
-        .badge-container { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 0.4rem; }
-        .badge { display: inline-flex; align-items: center; gap: 4px; padding: 3px 8px; border-radius: 9999px; font-size: 0.7rem; font-weight: 500; background-color: #f1f5f9; color: #475569; }
+        .badge-container { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 0.25rem; }
+        .badge { display: inline-flex; align-items: center; gap: 3px; padding: 2px 6px; border-radius: 9999px; font-size: 0.6rem; font-weight: 500; background-color: #f1f5f9; color: #475569; }
         
         /* Açıklama Metni */
-        .product-desc { font-size: 0.85rem; color: var(--text-light); line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        .product-desc { font-size: 0.75rem; color: #6b7280; line-height: 1.35; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; margin-bottom: 0.1rem; }
         
-        .product-footer { display: flex; justify-content: flex-end; align-items: center; margin-top: 0.5rem; }
-        .product-price { display: none; } /* Hidden here, moved to absolute badge */
-        .price-badge { position: absolute; top: 1rem; right: 1rem; background: var(--primary); color: white; font-weight: 700; font-size: 0.95rem; padding: 4px 10px; border-radius: 12px; box-shadow: 0 4px 10px rgba(255,107,107,0.3); }
+        .product-footer { display: flex; justify-content: space-between; align-items: center; margin-top: auto; padding-top: 0.6rem; }
+        .product-price { display: block; font-size: 1.05rem; font-weight: 800; color: var(--text); text-align: left; }
+        .price-badge { display: none; }
 
         /* Hamburger Sidebar */
         .sidebar-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1002; opacity: 0; pointer-events: none; transition: 0.3s; backdrop-filter: blur(2px); }
@@ -333,23 +323,26 @@
 
     
     <div class="sticky-top-container">
-        <div class="top-bar" style="position: relative;">
-            <!-- Geri Butonu -->
-            <a href="{{ route('home') }}" style="color: var(--text); font-weight: 700; font-size: 1.1rem; display: flex; align-items: center; gap: 6px; text-decoration: none;">
-                <i class="fa-solid fa-chevron-left"></i> Geri
-            </a>
-
-            <!-- Masa Badge (Tam Ortalanmış) -->
-            <div id="header-table-badge" style="display: {{ (isset($qrCodeCart) && $qrCodeCart) || session('current_masaismi') ? 'flex' : 'none' }}; position: absolute; left: 50%; transform: translateX(-50%); z-index: 20; background: linear-gradient(135deg, #1e293b, #0f172a); color: #f8fafc; padding: 6px 16px; border-radius: 20px; font-size: 0.88rem; font-weight: 700; align-items: center; gap: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); border: 1px solid rgba(255,255,255,0.1); white-space: nowrap;">
-                <i class="fa-solid fa-chair" style="color: #fcd34d; font-size: 0.95rem;"></i>
-                <span id="header-table-name">{{ $qrCodeCart ? $qrCodeCart->Masaismi : (session('current_masaismi') ?? '') }}</span>
+        @php $aktifMasaParam = (isset($qrCodeCart) && $qrCodeCart && $qrCodeCart->QRCode) ? '?masa=' . $qrCodeCart->QRCode : ((isset($qrcode) && $qrcode) ? '?masa=' . $qrcode : (session('current_qrcode') ? '?masa=' . session('current_qrcode') : '')); @endphp
+        <div class="top-bar" style="position: relative; display: flex; justify-content: space-between; align-items: center; padding: 0.75rem 2.5rem; width: 100%; border-bottom: 1px solid rgba(0,0,0,0.08); margin-bottom: 0.75rem;">
+            <!-- Sol Tarafta Sadece Kafe Logosu -->
+            <div style="display: flex; align-items: center;">
+                <a href="{{ route('home') . $aktifMasaParam }}" title="Ana Sayfaya Git" style="display: flex; align-items: center; gap: 10px; text-decoration: none;">
+                    @if($settings && $settings->logo && file_exists(storage_path('app/public/' . $settings->logo)))
+                        <img src="{{ asset('storage/' . $settings->logo) }}" alt="Logo" style="max-height: 48px; max-width: 160px; object-fit: contain; filter: drop-shadow(0 2px 5px rgba(0,0,0,0.12));">
+                    @else
+                        <div style="display: flex; align-items: center; gap: 6px; font-weight: 800; font-size: 1.35rem; color: var(--text);">
+                            <i class="fa-solid fa-mug-hot" style="color: #8B5A2B;"></i>
+                            <span>{{ $settings->baslik ?? 'ANA SAYFA' }}</span>
+                        </div>
+                    @endif
+                </a>
             </div>
             
             <div style="display: flex; gap: 1.5rem; align-items: center;">
-                <!-- Top Nav Bar (Masaüstü için Ana Sayfa ve Admin) -->
+                <!-- Top Nav Bar (Sağ Tarafta: Ana Sayfa ve Admin) -->
                 <div class="top-nav-bar" style="padding: 0; gap: 1.5rem;">
-                    <a href="{{ route('home') }}">Ana Sayfa</a>
-                    <a href="javascript:void(0)" onclick="callWaiter()" style="color: #d97706;"><i class="fa-solid fa-bell"></i> Garson Çağır</a>
+                    <a href="{{ route('home') . $aktifMasaParam }}">Ana Sayfa</a>
                     <a href="{{ route('admin.dashboard') }}"><i class="fa-solid fa-user-lock"></i> Admin</a>
                 </div>
                 
@@ -360,7 +353,22 @@
             </div>
         </div>
     </div>
+
+    <!-- Masa Badge -->
+    <div id="table-badge-wrapper" style="display: flex; justify-content: center; width: 100%; margin-top: 0.5rem; margin-bottom: 0.75rem;">
+        <div id="header-table-badge" style="display: {{ ((isset($qrCodeCart) && $qrCodeCart) || session('current_masaismi')) ? 'inline-flex' : 'none' }}; background: linear-gradient(135deg, #1e293b, #0f172a); color: #f8fafc; padding: 6px 20px; border-radius: 20px; font-size: 0.88rem; font-weight: 700; align-items: center; gap: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); border: 1px solid rgba(255,255,255,0.1);">
+            <i class="fa-solid fa-chair" style="color: #fcd34d; font-size: 0.95rem;"></i>
+            <span id="header-table-name">{{ $qrCodeCart ? $qrCodeCart->Masaismi : (session('current_masaismi') ?? '') }}</span>
+        </div>
+    </div>
+
     <header>
+        <!-- Geri Butonu: İçecekler (Ana Kategoriler) Çapraz Üstünde -->
+        <div style="width: 100%; max-width: 950px; margin: 0 auto 0.4rem; padding: 0 1rem; display: flex; justify-content: flex-start;">
+            <a href="{{ route('home') . $aktifMasaParam }}" style="color: #3b3a36; font-weight: 700; font-size: 1rem; display: inline-flex; align-items: center; gap: 6px; text-decoration: none; background: rgba(255,255,255,0.85); padding: 5px 16px; border-radius: 25px; box-shadow: 0 2px 10px rgba(0,0,0,0.06); border: 1px solid rgba(0,0,0,0.08); transition: all 0.2s;">
+                <i class="fa-solid fa-chevron-left"></i> Geri
+            </a>
+        </div>
         <!-- Ana Kategoriler Slider -->
         @if(isset($mainCategories) && $mainCategories->count() > 0)
         <div class="slider-wrapper">
@@ -672,13 +680,13 @@
 
     <!-- Mobil Alt Sabit Menü -->
     <div class="mobile-bottom-nav">
-        <a href="{{ route('home') }}">
+        <a href="{{ route('home') . $aktifMasaParam }}">
             <i class="fa-solid fa-house"></i>
             <span>Ana Sayfa</span>
         </a>
-        <a href="javascript:void(0)" onclick="callWaiter()">
-            <i class="fa-solid fa-bell" style="color: #fcd34d;"></i>
-            <span>Garson Çağır</span>
+        <a href="{{ $mainCategories->count() > 0 ? route('menu.show', urlencode($mainCategories->first()->anaGrup)) . $aktifMasaParam : '#' }}" class="active" style="color: #8B5A2B;">
+            <i class="fa-solid fa-utensils"></i>
+            <span>Menü</span>
         </a>
         <a href="{{ route('admin.dashboard') }}">
             <i class="fa-solid fa-user-lock"></i>
@@ -1144,16 +1152,7 @@
         }
 
         function addToCart(btn, event, customPrice = null) {
-            if (btn.classList.contains('added')) return;
-
-            // Change button to checkmark
-            btn.innerHTML = '<i class="fa-solid fa-check"></i>';
-            btn.classList.add('added');
-            
-            setTimeout(() => {
-                btn.innerHTML = '<i class="fa-solid fa-plus"></i>';
-                btn.classList.remove('added');
-            }, 1500);
+            if (!btn) return;
 
             // Flying dot animation logic
             const rect = btn.getBoundingClientRect();
@@ -1324,6 +1323,50 @@
         @keyframes slideUp {
             from { transform: translate(-50%, 20px); opacity: 0; }
             to { transform: translate(-50%, 0); opacity: 1; }
+        }
+    </style>
+
+    <!-- Sol Altta Sabit ve Tam Duyarlı (Responsive) Yüzen Şık Garson Çağrısı Butonu (FAB) -->
+    <a href="javascript:void(0)" onclick="callWaiter()" id="fab-waiter-menu" title="Garson Çağır">
+        <i class="fa-solid fa-bell-concierge"></i>
+    </a>
+    <style>
+        #fab-waiter-menu {
+            position: fixed;
+            left: clamp(10px, 3.5vw, 25px);
+            bottom: clamp(25px, 5vh, 35px);
+            width: clamp(45px, 11vw, 62px);
+            height: clamp(45px, 11vw, 62px);
+            border-radius: 50%;
+            background: linear-gradient(135deg, #8B5A2B 0%, #5C3A21 100%);
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: clamp(1.1rem, 3.8vw, 1.6rem);
+            box-shadow: 0 6px 20px rgba(92, 58, 33, 0.45), 0 0 0 4px rgba(255, 255, 255, 0.85);
+            z-index: 99999;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            text-decoration: none;
+        }
+        @media (max-width: 768px) {
+            #fab-waiter-menu {
+                bottom: 80px !important;
+            }
+        }
+        #fab-waiter-menu:hover {
+            transform: translateY(-4px) scale(1.06);
+            box-shadow: 0 10px 25px rgba(92, 58, 33, 0.6), 0 0 0 5px rgba(255, 255, 255, 0.95);
+            background: linear-gradient(135deg, #9C6B3C 0%, #4A2E19 100%);
+        }
+        #fab-waiter-menu i {
+            animation: ringBellMenu 3s ease-in-out infinite;
+        }
+        @keyframes ringBellMenu {
+            0%, 80%, 100% { transform: rotate(0); }
+            85% { transform: rotate(15deg); }
+            90% { transform: rotate(-15deg); }
+            95% { transform: rotate(10deg); }
         }
     </style>
 

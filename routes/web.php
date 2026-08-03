@@ -50,6 +50,7 @@ Route::prefix('admin')->middleware(['check.admin'])->group(function () {
     Route::delete('/masalar/{id}', [AdminController::class, 'destroyMasa'])->name('admin.masalar.destroy');
     Route::post('/masalar/{id}/kapat', [AdminController::class, 'masaKapat'])->name('admin.masalar.kapat');
     Route::post('/masalar/cagri-tamamla/{id}', [AdminController::class, 'completeCall'])->name('admin.masalar.completeCall');
+    Route::get('/masalar/live-cagrilar-json', [AdminController::class, 'liveCagrilarJson'])->name('admin.masalar.liveCagrilarJson');
     Route::get('/admins', [AdminController::class, 'admins'])->name('admin.admins');
     Route::post('/admins', [AdminController::class, 'storeAdmin'])->name('admin.admins.store');
     Route::put('/admins/{id}', [AdminController::class, 'updateAdmin'])->name('admin.admins.update');

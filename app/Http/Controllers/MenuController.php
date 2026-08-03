@@ -11,14 +11,20 @@ class MenuController extends Controller
 {
     private function resolveQrCode($qrcode = null)
     {
-        if (!$qrcode && session()->has('current_qrcode')) {
-            $qrcode = session()->get('current_qrcode');
+        // Eğer ne rotadan bir masa tanımı ne de GET parametresi yoksa yalın ve pastasız açılıştır; eski oturumu sil ve masasız kurgula
+        if ($qrcode === null && !isset($_GET['masa']) && !isset($_GET['qr'])) {
+            session()->forget(['current_qrcode', 'current_masaismi', 'current_masakodu']);
+            return null;
         }
+
         if (!$qrcode && isset($_GET['masa'])) {
             $qrcode = $_GET['masa'];
         }
         if (!$qrcode && isset($_GET['qr'])) {
             $qrcode = $_GET['qr'];
+        }
+        if (!$qrcode && session()->has('current_qrcode')) {
+            $qrcode = session()->get('current_qrcode');
         }
 
         $qrCodeCart = null;
