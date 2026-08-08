@@ -27,6 +27,7 @@
                     <th>Ürün Adı</th>
                     <th>Kategori</th>
                     <th>Fiyat</th>
+                    <th style="width: 80px; text-align: center;">Sıra</th>
                     @if(session('admin_role') == '0')
                     <th style="text-align: center;">Öne Çıkan</th>
                     <th style="width: 150px;">İşlemler</th>
@@ -46,8 +47,11 @@
                         @endif
                     </td>
                     <td>{{ $product->UrunAd }}</td>
-                    <td>{{ isset($categories[$product->UrunGrubu_id]) ? $categories[$product->UrunGrubu_id]->Urungrubu : 'Kategori Yok' }}</td>
+                    <td>{{ $product->UrunGrubu ?: (isset($categories[$product->UrunGrubu_id]) ? $categories[$product->UrunGrubu_id]->Urungrubu : (isset($categoriesByCode[$product->UrunGrubu_id]) ? $categoriesByCode[$product->UrunGrubu_id]->Urungrubu : 'Kategori Yok')) }}</td>
                     <td>₺{{ number_format((float)$product->FixFiyat, 2) }}</td>
+                    <td style="text-align: center;">
+                        <input type="number" value="{{ $product->SiraNo ?? 0 }}" onchange="updateProductOrder({{ $product->id }}, this.value)" style="width: 60px; padding: 4px; border: 1px solid #cbd5e1; border-radius: 4px; text-align: center;">
+                    </td>
                     @if(session('admin_role') == '0')
                     <td style="text-align: center;">
                         <label class="switch">
@@ -177,6 +181,28 @@ function toggleFeatured(productId, checkbox) {
         console.error('Error:', error);
         alert('İşlem sırasında hata oluştu.');
         checkbox.checked = !checkbox.checked;
+    });
+}
+
+function updateProductOrder(productId, newOrder) {
+    fetch(`/admin/products/${productId}/update-sira`, {
+        method: 'POST',
+        headers: {
+            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+        },
+        body: JSON.stringify({ SiraNo: newOrder })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if(!data.success) {
+            alert('Sıra güncellenirken hata oluştu: ' + (data.message || 'Bilinmeyen hata'));
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('İşlem sırasında hata oluştu.');
     });
 }
 </script>

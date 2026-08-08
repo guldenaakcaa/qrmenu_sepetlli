@@ -541,14 +541,11 @@
                 contentHtml += `
                     <div style="margin-top: 20px; padding-top: 15px; border-top: 1px solid #e2e8f0;">
                         <div style="font-size: 0.9rem; font-weight: 700; color: #334155; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
-                            <i class="fa-solid fa-wallet" style="color: #64748b;"></i> Ödeme Seçenekleri & Masayı Boşaltma:
+                            <i class="fa-solid fa-broom" style="color: #64748b;"></i> Masayı Boşaltma:
                         </div>
                         <div style="display: flex; gap: 12px; flex-wrap: wrap;">
-                            <button type="button" onclick="showCustomConfirmMasa('${masaId}', '${masaIsim}', 'Nakit', ${guncelTutar}, '${csrfToken}')" style="flex: 1; min-width: 140px; background: #10b981; color: white; border: none; border-radius: 10px; padding: 12px; font-size: 0.95rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25); transition: 0.2s;">
-                                <i class="fa-solid fa-money-bill-wave" style="font-size: 1.1rem;"></i> Nakit Tahsilat
-                            </button>
-                            <button type="button" onclick="showCustomConfirmMasa('${masaId}', '${masaIsim}', 'Kredi Kartı', ${guncelTutar}, '${csrfToken}')" style="flex: 1; min-width: 140px; background: #3b82f6; color: white; border: none; border-radius: 10px; padding: 12px; font-size: 0.95rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.25); transition: 0.2s;">
-                                <i class="fa-solid fa-credit-card" style="font-size: 1.1rem;"></i> Kredi Kartı
+                            <button type="button" onclick="showCustomConfirmMasa('${masaId}', '${masaIsim}', 'Sıfırla', ${guncelTutar}, '${csrfToken}')" style="flex: 1; min-width: 140px; background: #ef4444; color: white; border: none; border-radius: 10px; padding: 12px; font-size: 0.95rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.25); transition: 0.2s;">
+                                <i class="fa-solid fa-rotate-left" style="font-size: 1.1rem;"></i> Masayı Boşalt
                             </button>
                         </div>
                     </div>

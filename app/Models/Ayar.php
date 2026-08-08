@@ -32,6 +32,10 @@ class Ayar extends Model
         'para_birimi',
         'kdv_orani',
         'menu_durumu',
-        'coklu_dil_aktif'
+        'coklu_dil_aktif',
+        'latitude',
+        'longitude',
+        'is_gps_check_active',
+        'session_timeout_minutes'
     ];
 }

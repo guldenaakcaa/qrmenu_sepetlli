@@ -375,7 +375,7 @@
             <button class="slider-btn left" onclick="scrollSlider('.main-categories-slider', -150)"><i class="fa-solid fa-chevron-left"></i></button>
             <div class="main-categories-slider" id="main-slider">
                 @foreach($mainCategories as $mg)
-                    <a href="{{ route('menu.show', urlencode($mg->anaGrup)) }}" class="mc-card {{ isset($mainCategory) && $mg->anaGrup == $mainCategory ? 'active' : '' }}">
+                    <a href="{{ route('menu.show', urlencode($mg->anaGrup)) . $aktifMasaParam }}" class="mc-card {{ isset($mainCategory) && $mg->anaGrup == $mainCategory ? 'active' : '' }}">
                         @if($mg->anaGrupResimPath && file_exists(storage_path('app/public/' . $mg->anaGrupResimPath)))
                             <div class="mc-bg" style="background-image: url('{{ asset('storage/' . $mg->anaGrupResimPath) }}');"></div>
                         @else
@@ -433,6 +433,7 @@
                                  'is_drink' => $isFeatDrink ? 1 : 0,
                                  'has_lactose' => $urun->has_lactose ?? 0,
                                  'has_gluten' => $urun->has_gluten ?? 0,
+                                 'alerjenler' => $urun->alerjenler ?? '',
                                  'malzemeler' => $urun->malzeme_listesi ?? [],
                                  'kalori' => $urun->kalori ?? '',
                                  'hazirlanma_suresi' => $urun->hazirlanma_suresi ?? '',
@@ -451,6 +452,9 @@
                             </div>
                             <div class="featured-info">
                                 <h3 class="featured-name">{{ mb_strtoupper($urun->UrunAdKisa ?? $urun->UrunAd, 'UTF-8') }}</h3>
+                                @if(!empty($urun->alerjenler))
+                                    <div style="margin-top: 4px; margin-bottom: 4px;"><span class="badge" style="background: #ef4444; color: white; border: none; padding: 3px 6px; font-size: 0.7rem;"><i class="fa-solid fa-triangle-exclamation"></i> {{ $urun->alerjenler }}</span></div>
+                                @endif
                                 <div class="featured-price">₺{{ number_format((float)$urun->FixFiyat, 2, ',', '.') }}</div>
                             </div>
                         </div>
@@ -485,6 +489,7 @@
                                      'is_drink' => $isDrink ? 1 : 0,
                                      'has_lactose' => $urun->has_lactose ?? 0,
                                      'has_gluten' => $urun->has_gluten ?? 0,
+                                     'alerjenler' => $urun->alerjenler ?? '',
                                      'malzemeler' => $urun->malzeme_listesi ?? [],
                                      'kalori' => $urun->kalori ?? '',
                                      'hazirlanma_suresi' => $urun->hazirlanma_suresi ?? '',
@@ -508,6 +513,9 @@
                                         <h3 class="product-name">{{ $urun->UrunAd }}</h3>
                                         <!-- Hap (Badge) Etiketler -->
                                         <div class="badge-container">
+                                            @if(!empty($urun->alerjenler))
+                                                <span class="badge" style="background: #ef4444; color: white; border: none; padding: 4px 8px; font-weight: 700;"><i class="fa-solid fa-triangle-exclamation"></i> {{ $urun->alerjenler }}</span>
+                                            @endif
                                             @if($urun->has_gluten == 1)
                                                 <span class="badge"><i class="fa-solid fa-wheat-awn" style="color: #f59e0b;"></i> Gluten</span>
                                             @endif
@@ -793,10 +801,14 @@
 
             fetch("/api/v1/call/waiter/" + qrCode, {
                 method: "POST",
+                credentials: "same-origin",
                 headers: {
                     "Content-Type": "application/json",
                     "X-CSRF-TOKEN": "{{ csrf_token() }}"
-                }
+                },
+                body: JSON.stringify({
+                    qr_scan_time: '{{ session("qr_scan_time") }}'
+                })
             })
             .then(res => res.text())
             .then(text => {
@@ -1004,6 +1016,9 @@
             if (isDrink && urunData.has_lactose == 1) {
                 infoHtml += `<div style="width: 100%; text-align: left; margin-top: 6px; font-size: 0.85rem; color: #64748b; font-weight: 500;"><i class="fa-solid fa-circle-info" style="color: #60a5fa; margin-right: 4px;"></i>Laktozsuz seçeneği bulunmaktadır.</div>`;
             }
+            if (urunData.alerjenler) {
+                infoHtml += `<div style="width: 100%; text-align: left; margin-top: 6px; font-size: 0.85rem; color: #ef4444; font-weight: 700;"><i class="fa-solid fa-triangle-exclamation" style="margin-right: 4px;"></i>${urunData.alerjenler}</div>`;
+            }
             
             document.getElementById('bs-info-chips').innerHTML = infoHtml;
             
@@ -1027,6 +1042,9 @@
             // Kutu içecek veya meşrubat mı?
             const isCanned = /kutu|can|cola|kola|fanta|sprite|soda|su|ayran|enerji|energy|gazoz/i.test(adKucuk) || /kutu|meşrubat|hazır içecek/i.test(katKucuk);
             
+            // Tatlı mı? (Tatlılarda soğan/domates sormaması için)
+            const isDessert = /tatlı|dessert|dondurma|kadayif|baklava|künefe|kunefe|pasta|waffle|pancake|kek|cake|cheesecake/i.test(adKucuk) || /tatlı|dessert/i.test(katKucuk);
+            
             if (isDrink && !isCanned) {
                 // Sütlü/hazırlanan içecek
                 if (urunData.has_lactose == 1 || /kahve|coffee|latte|cappuccino|mocha|milk|süt|çikolata/i.test(adKucuk)) {
@@ -1039,7 +1057,7 @@
                         </label>
                     </div>`;
                 }
-            } else if (!isDrink && !isCanned) {
+            } else if (!isDrink && !isCanned && !isDessert) {
                 // Yiyecek (Ekle/Çıkar)
                 dynamicOptionsHtml += `
                 <div class="options-group" style="margin-bottom:1.25rem;">
@@ -1140,11 +1158,22 @@
                 try { urunData = JSON.parse(clickedButtonElement.getAttribute('data-urun')); } catch(e) {}
                 
                 if (urunData) {
-                    cartItemsArray.push({
-                        ad: urunData.ad,
-                        fiyat: calculatedPrice,
-                        ozellikler: secilenOzellikler
-                    });
+                    let existingItem = cartItemsArray.find(item => 
+                        item.ad === urunData.ad && 
+                        JSON.stringify(item.ozellikler) === JSON.stringify(secilenOzellikler)
+                    );
+
+                    if (existingItem) {
+                        existingItem.adet = (existingItem.adet || 1) + 1;
+                    } else {
+                        cartItemsArray.push({
+                            ad: urunData.ad,
+                            fiyat: calculatedPrice,
+                            ozellikler: secilenOzellikler,
+                            adet: 1
+                        });
+                    }
+                    saveCartToStorage();
                 }
                 
                 addToCart(clickedButtonElement, null, calculatedPrice);
@@ -1183,32 +1212,11 @@
             setTimeout(() => {
                 dot.remove();
                 
-                // Update Badge
-                cartCount++;
-                const badge = document.getElementById('cart-badge');
-                badge.textContent = cartCount;
-                badge.classList.add('active');
+                recalculateCart();
 
                 // Bounce Cart Icon
                 cartIcon.style.transform = 'scale(1.2)';
                 setTimeout(() => cartIcon.style.transform = 'scale(1)', 200);
-
-                // Update Total
-                let price = customPrice;
-                if (price === null) {
-                    const priceText = btn.parentElement.querySelector('.product-price').textContent;
-                    price = parseFloat(priceText.replace('₺', ''));
-                }
-                cartTotal += price;
-
-                // Show/Update FAB
-                const fab = document.getElementById('view-cart-btn');
-                document.getElementById('fab-total').textContent = '₺' + cartTotal.toFixed(2);
-                
-                if(cartCount === 1) {
-                    fab.style.display = 'flex';
-                    fab.style.animation = 'slideUp 0.3s ease forwards';
-                }
 
             }, 600); // Wait for transition
         }
@@ -1229,6 +1237,7 @@
                     });
                 }
                 
+                let adet = item.adet || 1;
                 html += `
                 <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid var(--border);">
                     <div style="flex:1; padding-right:10px;">
@@ -1236,8 +1245,15 @@
                         <div>${ozellikHtml}</div>
                     </div>
                     <div style="display:flex; align-items:center; gap:12px;">
-                        <span style="font-weight:700; color:var(--primary); font-size:1.05rem;">₺${item.fiyat.toFixed(2)}</span>
-                        <button onclick="removeCartItem(${idx})" style="background:#fef2f2; color:#ef4444; border:none; width:32px; height:32px; border-radius:8px; display:flex; align-items:center; justify-content:center; cursor:pointer; transition:0.2s;"><i class="fa-solid fa-trash-can"></i></button>
+                        <div style="display:flex; align-items:center; gap:8px; background:#f1f5f9; padding:4px 8px; border-radius:8px;">
+                            <button onclick="updateCartItemQty(${idx}, -1)" style="background:white; border:none; width:24px; height:24px; border-radius:4px; display:flex; align-items:center; justify-content:center; cursor:pointer; color:var(--text); font-weight:bold; box-shadow:0 2px 4px rgba(0,0,0,0.05);">-</button>
+                            <span style="font-weight:700; font-size:0.95rem; width:20px; text-align:center;">${adet}</span>
+                            <button onclick="updateCartItemQty(${idx}, 1)" style="background:white; border:none; width:24px; height:24px; border-radius:4px; display:flex; align-items:center; justify-content:center; cursor:pointer; color:var(--text); font-weight:bold; box-shadow:0 2px 4px rgba(0,0,0,0.05);">+</button>
+                        </div>
+                        <div style="display:flex; flex-direction:column; align-items:flex-end;">
+                            <span style="font-weight:700; color:var(--primary); font-size:1.05rem;">₺${(item.fiyat * adet).toFixed(2)}</span>
+                        </div>
+                        <button onclick="removeCartItem(${idx})" style="background:#fef2f2; color:#ef4444; border:none; width:32px; height:32px; border-radius:8px; display:flex; align-items:center; justify-content:center; cursor:pointer; transition:0.2s; margin-left:4px;"><i class="fa-solid fa-trash-can"></i></button>
                     </div>
                 </div>`;
             });
@@ -1255,25 +1271,108 @@
             document.body.style.overflow = '';
         }
 
-        function removeCartItem(idx) {
+        function recalculateCart() {
+            cartCount = 0;
+            cartTotal = 0;
+            cartItemsArray.forEach(item => {
+                cartCount += (item.adet || 1);
+                cartTotal += item.fiyat * (item.adet || 1);
+            });
+            
+            const badge = document.getElementById('cart-badge');
+            if (badge) {
+                badge.textContent = cartCount;
+                if(cartCount > 0) badge.classList.add('active');
+                else badge.classList.remove('active');
+            }
+            
+            const fabTotal = document.getElementById('fab-total');
+            if (fabTotal) fabTotal.textContent = '₺' + Math.max(0, cartTotal).toFixed(2);
+            
+            const modalTotal = document.getElementById('cart-modal-total');
+            if (modalTotal) modalTotal.textContent = '₺' + Math.max(0, cartTotal).toFixed(2);
+            
+            const fab = document.getElementById('view-cart-btn');
+            if (fab) {
+                if (cartCount > 0) {
+                    fab.style.display = 'flex';
+                    if(!fab.style.animation) fab.style.animation = 'slideUp 0.3s ease forwards';
+                } else {
+                    fab.style.display = 'none';
+                    fab.style.animation = '';
+                }
+            }
+            saveCartToStorage();
+        }
+
+        function updateCartItemQty(idx, delta) {
             const item = cartItemsArray[idx];
             if (item) {
-                cartTotal -= item.fiyat;
-                cartCount--;
-                cartItemsArray.splice(idx, 1);
+                item.adet = (item.adet || 1) + delta;
+                if (item.adet <= 0) {
+                    cartItemsArray.splice(idx, 1);
+                }
+                recalculateCart();
                 
-                document.getElementById('cart-badge').textContent = cartCount;
-                document.getElementById('fab-total').textContent = '₺' + Math.max(0, cartTotal).toFixed(2);
-                
-                if (cartCount === 0) {
-                    document.getElementById('cart-badge').classList.remove('active');
-                    document.getElementById('view-cart-btn').style.display = 'none';
+                if (cartItemsArray.length === 0) {
                     closeCartModal();
                 } else {
                     openCartModal(); // Re-render
                 }
             }
         }
+
+        function removeCartItem(idx) {
+            if (cartItemsArray[idx]) {
+                cartItemsArray.splice(idx, 1);
+                recalculateCart();
+                if (cartItemsArray.length === 0) {
+                    closeCartModal();
+                } else {
+                    openCartModal(); // Re-render
+                }
+            }
+        }
+        
+        function saveCartToStorage() {
+            try {
+                let qr = '{{ $qrcode ?? "" }}';
+                if (!qr) return;
+                let cartData = {
+                    items: cartItemsArray,
+                    count: cartCount,
+                    total: cartTotal
+                };
+                localStorage.setItem('saved_cart_' + qr, JSON.stringify(cartData));
+            } catch(e) {}
+        }
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            try {
+                let qr = '{{ $qrcode ?? "" }}';
+                if (qr) {
+                    let savedCart = localStorage.getItem('saved_cart_' + qr);
+                    if (savedCart) {
+                        let parsed = JSON.parse(savedCart);
+                        if (parsed && parsed.items && parsed.items.length > 0) {
+                            cartItemsArray = parsed.items;
+                            cartCount = parsed.count;
+                            cartTotal = parsed.total;
+                            
+                            // Arayüzü güncelle
+                            const badge = document.getElementById('cart-badge');
+                            badge.textContent = cartCount;
+                            badge.classList.add('active');
+                            
+                            const fab = document.getElementById('view-cart-btn');
+                            document.getElementById('fab-total').textContent = '₺' + Math.max(0, cartTotal).toFixed(2);
+                            fab.style.display = 'flex';
+                            fab.style.animation = 'slideUp 0.3s ease forwards';
+                        }
+                    }
+                }
+            } catch(e) {}
+        });
 
         function submitOrder() {
             let qrCode = (document.getElementById('qrcode_val') ? document.getElementById('qrcode_val').value : '') || localStorage.getItem('menu_qrcode') || '';
@@ -1284,20 +1383,82 @@
             
             const btn = document.getElementById('btn-submit-order');
             btn.disabled = true;
+
+            @if(!empty($settings->is_gps_check_active) && $settings->is_gps_check_active)
+            btn.querySelector('span').textContent = 'Konum Kontrol Ediliyor...';
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(function(position) {
+                    let userLat = position.coords.latitude;
+                    let userLon = position.coords.longitude;
+                    let restLat = {{ $settings->latitude ?: '0' }};
+                    let restLon = {{ $settings->longitude ?: '0' }};
+                    
+                    if(restLat && restLon) {
+                        let distance = calculateDistance(userLat, userLon, restLat, restLon);
+                        if(distance > 40) { // 40 metre mesafe sınırı (restoran içi ve hemen önü)
+                            btn.disabled = false;
+                            btn.querySelector('span').textContent = 'Siparişi Onayla';
+                            showCustomAlert('Güvenlik Uyarısı', 'Sipariş verebilmek için  restoranda olmalısınız. (Sistem restoran dışında olduğunuzu tespit etti)', 'error');
+                            return;
+                        }
+                    }
+                    executeOrderSubmit(qrCode, btn);
+                }, function(error) {
+                    btn.disabled = false;
+                    btn.querySelector('span').textContent = 'Siparişi Onayla';
+                    showCustomAlert('Konum İzni Gerekli', 'Güvenlik nedeniyle sipariş verebilmek için tarayıcınızın veya telefonunuzun konum servisine izin vermeniz gerekmektedir.', 'warning');
+                }, { timeout: 10000 });
+            } else {
+                executeOrderSubmit(qrCode, btn);
+            }
+            @else
+            executeOrderSubmit(qrCode, btn);
+            @endif
+        }
+
+        function calculateDistance(lat1, lon1, lat2, lon2) {
+            const R = 6371e3; // metres
+            const p1 = lat1 * Math.PI/180;
+            const p2 = lat2 * Math.PI/180;
+            const dp = (lat2-lat1) * Math.PI/180;
+            const dl = (lon2-lon1) * Math.PI/180;
+
+            const a = Math.sin(dp/2) * Math.sin(dp/2) +
+                      Math.cos(p1) * Math.cos(p2) *
+                      Math.sin(dl/2) * Math.sin(dl/2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+            return R * c;
+        }
+
+        function executeOrderSubmit(qrCode, btn) {
             btn.querySelector('span').textContent = 'Gönderiliyor...';
 
             fetch('/api/v1/siparis/kaydet/' + qrCode, {
                 method: 'POST',
+                credentials: 'same-origin',
                 headers: {
                     'Content-Type': 'application/json',
                     'X-CSRF-TOKEN': '{{ csrf_token() }}'
                 },
                 body: JSON.stringify({
-                    items: cartItemsArray
+                    items: cartItemsArray,
+                    qr_scan_time: '{{ session("qr_scan_time") }}'
                 })
             })
-            .then(res => res.json())
+            .then(res => {
+                if(res.status === 429) {
+                    throw new Error("Çok fazla istek gönderdiniz. Lütfen 1 dakika bekleyip tekrar deneyin.");
+                }
+                return res.json();
+            })
             .then(data => {
+                if(data.success === false) {
+                    btn.disabled = false;
+                    btn.querySelector('span').textContent = 'Siparişi Onayla';
+                    showCustomAlert('Hata', data.message, 'error');
+                    return;
+                }
+                
                 btn.disabled = false;
                 btn.querySelector('span').textContent = 'Siparişiniz Alındı!';
                 btn.style.background = '#10b981';
@@ -1306,16 +1467,22 @@
                     cartItemsArray = [];
                     cartCount = 0;
                     cartTotal = 0;
+                    saveCartToStorage();
                     document.getElementById('cart-badge').classList.remove('active');
                     document.getElementById('view-cart-btn').style.display = 'none';
                     closeCartModal();
+                    
+                    // Butonu ilk haline geri döndür ki bir sonraki siparişte takılı kalmasın
+                    btn.querySelector('span').textContent = 'Siparişi Onayla';
+                    btn.style.background = 'var(--primary)';
+                    
                     showCustomAlert('Harika! Siparişiniz Alındı', 'Siparişiniz masanıza özel olarak mutfağa iletilmiştir. Afiyet olsun!', 'success');
                 }, 800);
             })
             .catch(err => {
                 btn.disabled = false;
                 btn.querySelector('span').textContent = 'Sipariş Ver';
-                showCustomAlert('Sipariş Hatası', 'Sipariş gönderilirken bir hata oluştu. Lütfen garson veya kasanızla iletişime geçin.', 'error');
+                showCustomAlert('Sipariş Hatası', err.message || 'Sipariş gönderilirken bir hata oluştu. Lütfen garson veya kasanızla iletişime geçin.', 'error');
             });
         }
     </script>

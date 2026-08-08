@@ -32,6 +32,22 @@ class APIController extends Controller
 
     public function AddWaiterCallToTable($qrCode)
     {
+        // GÜVENLİK: Oturum süresi kontrolü
+        \App\Models\Ayar::first();
+        $scanTime = session('qr_scan_time');
+        if (!$scanTime) {
+            $scanTime = request()->input('qr_scan_time');
+        }
+        
+        \Log::info("QR Scan Time Check in API: " . ($scanTime ?: "NULL"));
+        $settings = \App\Models\Ayar::first();
+        $timeoutMinutes = $settings ? ($settings->session_timeout_minutes ?? 120) : 120;
+        $timeoutSeconds = $timeoutMinutes * 60;
+
+        if (!$scanTime || (now()->timestamp - $scanTime) > $timeoutSeconds) {
+            return response()->json(['success' => false, 'message' => 'Lütfen masadaki QR kodu tekrar okutun. (Güvenlik nedeniyle süreniz dolmuştur)'], 403);
+        }
+
         return $this->qrCodeRepo->AddCallToTable($qrCode);
     }
 
@@ -46,9 +62,50 @@ class APIController extends Controller
 
     public function SaveOrderToTable(Request $request, $qrCode)
     {
+        // GÜVENLİK: Oturum süresi kontrolü
+        \App\Models\Ayar::first();
+        $scanTime = session('qr_scan_time');
+        if (!$scanTime) {
+            $scanTime = $request->input('qr_scan_time');
+        }
+        
+        \Log::info("QR Scan Time Check in API: " . ($scanTime ?: "NULL"));
+        $settings = \App\Models\Ayar::first();
+        $timeoutMinutes = $settings ? ($settings->session_timeout_minutes ?? 120) : 120;
+        $timeoutSeconds = $timeoutMinutes * 60;
+
+        if (!$scanTime) {
+            return response()->json(['success' => false, 'message' => 'Lütfen masadaki QR kodu tekrar okutun. (Güvenlik nedeniyle sipariş süreniz dolmuştur)'], 403);
+        }
+
+        if ((now()->timestamp - $scanTime) > $timeoutSeconds) {
+            session()->forget('qr_scan_time');
+            return response()->json(['success' => false, 'message' => 'Lütfen masadaki QR kodu tekrar okutun. (Güvenlik nedeniyle sipariş süreniz dolmuştur)'], 403);
+        }
+
         $qrcodeKart = \App\Models\QrCodeKart::where('QRCode', $qrCode)->first();
-        $masaIsim = $qrcodeKart ? $qrcodeKart->Masaismi : 'Masa (QR: ' . $qrCode . ')';
-        $masaId = $qrcodeKart ? $qrcodeKart->Masa_id : 0;
+        $masa = null;
+
+        if (!$qrcodeKart) {
+            $cleanName = str_replace('-', ' ', $qrCode);
+            $masa = \App\Models\Masa::where('slug', $qrCode)
+                ->orWhere('isim', $qrCode)
+                ->orWhere('isim', $cleanName)
+                ->orWhere('isim', 'LIKE', '%' . $qrCode . '%')
+                ->orWhere('id', $qrCode)
+                ->first();
+                
+            if (!$masa && is_numeric($qrCode)) {
+                $masa = \App\Models\Masa::where('isim', 'Masa ' . $qrCode)->orWhere('isim', 'MASA ' . $qrCode)->first();
+            }
+
+            if ($masa) {
+                $qrcodeKart = \App\Models\QrCodeKart::where('Masa_id', $masa->id)->first();
+            }
+        }
+
+        $masaIsim = $qrcodeKart ? $qrcodeKart->Masaismi : ($masa ? $masa->isim : 'Masa (QR: ' . $qrCode . ')');
+        $masaId = $qrcodeKart ? $qrcodeKart->Masa_id : ($masa ? $masa->id : 0);
         
         $items = $request->input('items', []);
         
@@ -58,7 +115,7 @@ class APIController extends Controller
                 'masa_id' => $masaId,
                 'session_id' => session()->getId() ?? uniqid(),
                 'urun_adi' => $item['ad'],
-                'adet' => 1,
+                'adet' => isset($item['adet']) ? (int)$item['adet'] : 1,
                 'fiyat' => $item['fiyat'],
                 'ozellikler' => isset($item['ozellikler']) ? json_encode($item['ozellikler'], JSON_UNESCAPED_UNICODE) : null,
                 'durum' => 0,

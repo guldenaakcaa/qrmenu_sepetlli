@@ -31,6 +31,9 @@ class AdminController extends Controller
                 'admin_email' => $user->email,
                 'admin_role' => (string) $user->kullanicitipi
             ]);
+            
+            \Illuminate\Support\Facades\Cookie::queue('admin_remember', $user->id, 525600); // 1 year
+            
             return redirect()->route('admin.dashboard')->with('success', 'Başarıyla giriş yapıldı.');
         }
 
@@ -42,6 +45,7 @@ class AdminController extends Controller
     public function logout()
     {
         session()->forget(['admin_logged_in', 'admin_id', 'admin_name', 'admin_email', 'admin_role']);
+        \Illuminate\Support\Facades\Cookie::queue(\Illuminate\Support\Facades\Cookie::forget('admin_remember'));
         return redirect()->route('admin.login');
     }
 
@@ -65,6 +69,38 @@ class AdminController extends Controller
         $seciliTarih = $request->get('tarih', date('Y-m-d'));
 
         $masalar = \App\Models\Masa::all();
+
+        // Eğer masaüstünden eklenen ve slug veya karekodu eksik olan masalar varsa otomatik kilit kır ve kurgula
+        foreach ($masalar as $masa) {
+            $qrKart = \App\Models\QrCodeKart::where('Masa_id', $masa->id)->first();
+            if (empty($masa->slug) || !$qrKart) {
+                $slugBase = \Illuminate\Support\Str::slug($masa->isim);
+                if (empty($slugBase)) $slugBase = 'masa';
+                $qrCode = !empty($masa->slug) ? $masa->slug : ($slugBase . '-' . strtolower(\Illuminate\Support\Str::random(4)));
+                while (empty($masa->slug) && (\App\Models\QrCodeKart::where('QRCode', $qrCode)->exists() || \App\Models\Masa::where('slug', $qrCode)->exists())) {
+                    $qrCode = $slugBase . '-' . strtolower(\Illuminate\Support\Str::random(4));
+                }
+                if (empty($masa->slug)) {
+                    $masa->slug = $qrCode;
+                    $masa->save();
+                }
+                if (!$qrKart) {
+                    \App\Models\QrCodeKart::create([
+                        'QRCode' => $masa->slug,
+                        'Cari_id' => 1,
+                        'QRTur' => 1,
+                        'KullaniciParola' => '',
+                        'Masa_id' => $masa->id,
+                        'Masaismi' => $masa->isim,
+                        'MusteriAd' => '',
+                        'KullaniciAd' => '',
+                        'Personel_id' => 0,
+                        'Status' => 1
+                    ]);
+                }
+            }
+        }
+
         $masa_siparisleri = \App\Models\MasaSiparis::all()->groupBy('masa_isim');
 
         // QR kodları masalara göre al
@@ -194,6 +230,11 @@ class AdminController extends Controller
 
         $data = $request->except(['_token', 'logo', 'favicon', 'karsilama_gorsel', 'remove_logo', 'remove_favicon', 'remove_karsilama_gorsel']);
 
+        // Checkbox Alanları İçin Varsayılan Değerler
+        if (!$request->has('is_gps_check_active')) {
+            $data['is_gps_check_active'] = 0;
+        }
+
         // Handle File Uploads and Removals
         if ($request->has('remove_logo')) {
             $data['logo'] = null;
@@ -214,6 +255,17 @@ class AdminController extends Controller
         } elseif ($request->hasFile('karsilama_gorsel')) {
             $path = $request->file('karsilama_gorsel')->store('settings', 'public');
             $data['karsilama_gorsel'] = $path;
+        }
+
+        // Google Maps Linkinden Otomatik Enlem/Boylam Çekme (Eğer uzun link girilmişse)
+        if (!empty($data['google_map_url'])) {
+            if (preg_match('/@(\-?\d+\.\d+),(\-?\d+\.\d+)/', $data['google_map_url'], $matches)) {
+                $data['latitude'] = $matches[1];
+                $data['longitude'] = $matches[2];
+            } elseif (preg_match('/(?:q|query)=(\-?\d+\.\d+),(\-?\d+\.\d+)/', $data['google_map_url'], $matches)) {
+                $data['latitude'] = $matches[1];
+                $data['longitude'] = $matches[2];
+            }
         }
 
         $settings->update($data);
